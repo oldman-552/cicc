@@ -1,6 +1,6 @@
 export type Lang='en'|'ar'|'fa';
 export type Role='admin'|'analyst'|'viewer';
-export type Identity={mode:'demo'|'authenticated';role:Role;username?:string;authenticated:boolean;mfa_enabled?:boolean;workspace?:{slug:string;name:string}};
+export type Identity={mode:'demo'|'authenticated';role:Role;username?:string;authenticated:boolean;mfa_enabled?:boolean;mfa_required?:boolean;workspace?:{slug:string;name:string}};
 export type Source={id:'github'|'cisa'|'mitre'|'attack'|'epss';name:string;url:string;status:'error'|'cached'|'not_connected';last_success:string|null;last_attempt:string|null;error:string|null;count:number;version:string|null;released_at:string|null};
 export type Epss={score:string;percentile:string;score_date:string;collected_at:string;source:string;classification:string};
 export type Advisory={id:string;cve:string|null;summary:string;severity:string;url:string;published_at:string|null;collected_at:string;kev_status:string;kev_version:string|null;kev_collected_at:string|null;epss?:Epss|null};

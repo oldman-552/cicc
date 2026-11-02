@@ -136,7 +136,8 @@ def test_enforced_mfa_blocks_password_only_and_preexisting_sessions(env,monkeypa
         mfa.enroll(db,user,SECRET,pyotp.TOTP(SECRET).generate_otp(100))
     clock[0]=3030
     assert client.post('/api/auth/login',json={'username':'user1','password':PASSWORD,'otp':pyotp.TOTP(SECRET).generate_otp(101)}).status_code==200
-    assert client.get('/api/auth/session').json()['mfa_enabled'] is True
+    identity=client.get('/api/auth/session').json()
+    assert identity['mfa_enabled'] is True and identity['mfa_required'] is True
     with factory.begin() as db:
         user=db.scalar(select(User).where(User.username=='user1'))
         mfa.reset(db,user)

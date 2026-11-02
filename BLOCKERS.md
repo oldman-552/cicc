@@ -9,7 +9,7 @@
 | Asset authorization | User-attested only; no independent ownership verification or production tenant isolation | Do not treat recorded scope, SBOM links or graph links as evidence of authorization, deployment or exposure. |
 | Data coverage | Most requested public adapters not implemented | GitHub/CISA/CVE Program/ATT&CK are manual cached snapshots; ATT&CK is a 10-file sample; CVE collection is a limited selection, not a full feed. FIRST EPSS adapter is mocked-only; live endpoint is outside allowed outbound hosts. Add and validate NVD, OSV and other authorized sources. |
 | Private services | Credentials/authorization not supplied | Only required when implementing specific private integrations. Do not solicit or store credentials in chat; continue unrelated development. |
-| CI | Baseline, workspace-guard, account CLI and optional TOTP GitHub Actions runs passed; TOTP enforcement revision CI pending | Add comprehensive security, browser, concurrency and recovery jobs. |
+| CI | Baseline, workspace-guard, account CLI and optional TOTP GitHub Actions runs passed; TOTP enforcement revision passed; session-management revision CI pending | Add comprehensive security, browser, concurrency and recovery jobs. |
 | Investigation timeline | Local mutable table, no older-history backfill | Do not treat it as a tamper-evident audit trail or chain of custody. |
 | Backup/DR | No implementation or drill | Design protected backups, restoration testing and measurable RPO/RTO before deployment. |
 | SBOM precision | Only a limited npm/PyPI range subset is evaluated; JSON parsing is not isolated | Candidate identity matches cannot establish vulnerability or safety; add isolated parsing and broaden ecosystem-correct range evaluation. |

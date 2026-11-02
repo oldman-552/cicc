@@ -192,3 +192,23 @@ def test_postgres_mfa_policy_invalidates_unverified_sessions(monkeypatch):
         assert client.get('/api/auth/session').json()['mfa_enabled'] is True
         with SessionLocal() as db:
             assert db.scalar(select(Session.mfa_verified).where(Session.user_id==user_id)) is True
+
+
+def test_postgres_revoke_other_sessions_only(monkeypatch):
+    from backend.app import accounts
+    from backend.app.db import SessionLocal
+    from backend.app.workspaces import create_workspace
+    monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    suffix=uuid4().hex[:16];username='sess'+suffix;othername='other'+suffix;password='synthetic-password-123456'
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'session-'+suffix,'Session test')
+        accounts.configure_account(db,username,password,'viewer',workspace.id)
+        accounts.configure_account(db,othername,password,'admin',workspace.id)
+    with TestClient(main.app,base_url='https://testserver') as a,TestClient(main.app,base_url='https://testserver') as b,TestClient(main.app,base_url='https://testserver') as c:
+        for client,name in ((a,username),(b,username),(c,othername)):
+            assert client.post('/api/auth/login',json={'username':name,'password':password}).status_code==200
+        response=a.post('/api/auth/sessions/revoke-others',headers={'X-CSRF-Token':a.cookies.get('cicc_csrf')})
+        assert response.status_code==200 and response.json()['revoked']==1
+        assert a.get('/api/auth/session').status_code==200
+        assert b.get('/api/auth/session').status_code==401
+        assert c.get('/api/auth/session').status_code==200

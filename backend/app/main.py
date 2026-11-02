@@ -93,11 +93,11 @@ async def access_control(request:Request,call_next):
         else:
             with SessionLocal() as db: row=security.get_session(db,request.cookies.get('cicc_session',''),require_mfa=REQUIRE_MFA)
             if not row: return JSONResponse({'detail':'Authentication required'},status_code=401,headers={'Cache-Control':'no-store'})
-            session,user=row; request.state.actor=user.username; request.state.role=user.role; request.state.workspace_id=user.workspace_id
+            session,user=row; request.state.actor=user.username; request.state.role=user.role; request.state.workspace_id=user.workspace_id; request.state.user_id=user.id
             if request.method not in ('GET','HEAD','OPTIONS'):
                 csrf=request.headers.get('X-CSRF-Token','')
                 if not csrf or len(csrf)>256 or not hmac.compare_digest(session.csrf_hash,security.digest(csrf)): return JSONResponse({'detail':'Invalid CSRF token'},status_code=403,headers={'Cache-Control':'no-store'})
-                if path!='/api/auth/logout' and (user.role=='viewer' or (path.startswith('/api/sources/') and user.role!='admin')): return JSONResponse({'detail':'Insufficient permission'},status_code=403,headers={'Cache-Control':'no-store'})
+                if path not in ('/api/auth/logout','/api/auth/sessions/revoke-others') and (user.role=='viewer' or (path.startswith('/api/sources/') and user.role!='admin')): return JSONResponse({'detail':'Insufficient permission'},status_code=403,headers={'Cache-Control':'no-store'})
             if (path=='/api/audit' or path.startswith('/api/audit/')) and user.role!='admin': return JSONResponse({'detail':'Insufficient permission'},status_code=403,headers={'Cache-Control':'no-store'})
     response=await call_next(request)
     if path.startswith('/api/'):
@@ -148,7 +148,7 @@ def current_session(request:Request):
         row=security.get_session(db,request.cookies.get('cicc_session',''),require_mfa=REQUIRE_MFA)
         if not row: raise HTTPException(401,'Authentication required')
         workspace=db.get(Workspace,row.User.workspace_id)
-        return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'mfa_enabled':db.get(UserMfa,row.User.id) is not None,'workspace':{'slug':workspace.slug,'name':workspace.name}}
+        return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'mfa_enabled':db.get(UserMfa,row.User.id) is not None,'mfa_required':REQUIRE_MFA,'workspace':{'slug':workspace.slug,'name':workspace.name}}
 
 @app.post('/api/auth/login')
 def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(get_db)):
@@ -178,7 +178,7 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     response.set_cookie('cicc_session',token,secure=COOKIE_SECURE,httponly=True,samesite='strict',path='/',max_age=43200)
     response.set_cookie('cicc_csrf',csrf,secure=COOKIE_SECURE,httponly=False,samesite='strict',path='/',max_age=43200)
     workspace=db.get(Workspace,user.workspace_id)
-    return {'mode':'authenticated','role':user.role,'username':user.username,'authenticated':True,'mfa_enabled':record is not None,'workspace':{'slug':workspace.slug,'name':workspace.name}}
+    return {'mode':'authenticated','role':user.role,'username':user.username,'authenticated':True,'mfa_enabled':record is not None,'mfa_required':REQUIRE_MFA,'workspace':{'slug':workspace.slug,'name':workspace.name}}
 
 @app.post('/api/auth/logout')
 def logout(request:Request,response:Response,db:DbSession=Depends(get_db)):
@@ -186,6 +186,16 @@ def logout(request:Request,response:Response,db:DbSession=Depends(get_db)):
         db.execute(delete(Session).where(Session.token_hash==security.digest(request.cookies.get('cicc_session','')))); write_audit(db,request,'auth.logout'); db.commit()
     response.delete_cookie('cicc_session',path='/',secure=COOKIE_SECURE,httponly=True,samesite='strict'); response.delete_cookie('cicc_csrf',path='/',secure=COOKIE_SECURE,samesite='strict')
     return {'ok':True}
+
+@app.post('/api/auth/sessions/revoke-others')
+def revoke_other_sessions(request:Request,db:DbSession=Depends(get_db)):
+    if DEMO: raise HTTPException(400,'Session management unavailable in demo mode')
+    current=security.digest(request.cookies.get('cicc_session',''))
+    result=db.execute(delete(Session).where(Session.user_id==request.state.user_id,Session.token_hash!=current))
+    count=result.rowcount
+    write_audit(db,request,'auth.sessions_revoked',f'{count} other sessions')
+    db.commit()
+    return {'revoked':count}
 
 @app.get('/api/sources')
 def list_sources(db:DbSession=Depends(get_db)):

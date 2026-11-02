@@ -30,3 +30,9 @@
 - Optional TOTP commit `31484af` passed GitHub Actions backend, frontend and disposable PostgreSQL, including concurrent replay rejection: https://github.com/oldman-552/cicc/actions/runs/41432791552. This is not enterprise security certification.
 - Added opt-in `CICC_REQUIRE_MFA=1` deployment-wide policy; invalid configuration fails startup. Added a migration that marks prior sessions MFA-unverified; enrolled accounts always reject sessions without TOTP, and the enforcement switch additionally blocks password-only accounts and sessions. Migration downgrade is refused while MFA enrollments exist. Demo mode intentionally bypasses both authentication and policy.
 - New tests cover policy activation, pre-existing/unverified sessions, reset revocation, failed enrollment, migration preservation and invalid configuration; a PostgreSQL policy test is defined for the next CI run. Latest local results: 73 backend passed, 6 PostgreSQL-only skipped; 12 frontend tests, Vite build, SQLite schema check, pip check and npm audit passed.
+
+### Session management
+
+- TOTP enforcement commit `adfcae2` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41433244922.
+- Added a CSRF-protected self-service action to revoke an account’s other sessions, including viewer accounts, without affecting the current session or other accounts. The authenticated status page shows TOTP enrollment and deployment policy; it does not claim production security. Demo mode has no session management. In-flight requests may still complete.
+- Local results: 75 backend passed, 7 PostgreSQL-only tests skipped; 12 frontend tests passed; build, Alembic check, pip check and npm audit passed. PostgreSQL session-revocation validation is defined for the next CI run.

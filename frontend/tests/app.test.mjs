@@ -43,7 +43,8 @@ test('login and viewer permission state',async()=>{
  globalThis.fetch=async(url,options={})=>{
    calls.push(String(url));
    if(url==='/api/auth/session')return json(401,{});
-   if(url==='/api/auth/login')return json(200,{mode:'authenticated',role:'viewer',username:'reader',authenticated:true,workspace:{slug:'acme',name:'Acme development'}});
+   if(url==='/api/auth/sessions/revoke-others')return json(200,{revoked:2});
+   if(url==='/api/auth/login')return json(200,{mode:'authenticated',role:'viewer',username:'reader',authenticated:true,mfa_enabled:false,mfa_required:false,workspace:{slug:'acme',name:'Acme development'}});
    if(url==='/api/sources'||url==='/api/investigations')return json(200,[]);
    if(String(url).startsWith('/api/advisories'))return json(200,emptyPage);
    if(url==='/api/overview')return json(200,{advisories:0,kev_entries:0,open_investigations:0});
@@ -60,6 +61,15 @@ test('login and viewer permission state',async()=>{
    assert.ok(ui.getByText('Acme development'));
    assert.ok(ui.getByText(/public sources are shared/));
    assert.equal(calls.includes('/api/audit'),false);
+   fireEvent.click(ui.getAllByRole('button',{name:'Platform status'})[0]);
+   assert.ok(ui.getByText(/TOTP not enabled for this account/));
+   assert.ok(ui.getByText(/TOTP is optional for local accounts/));
+   fireEvent.click(ui.getByRole('button',{name:'Sign out other sessions'}));
+   await waitFor(()=>assert.ok(ui.getByText(/Other sessions signed out: 2/)));
+   assert.ok(calls.includes('/api/auth/sessions/revoke-others'));
+   fireEvent.change(ui.getByLabelText('Language'),{target:{value:'ar'}});
+   assert.ok(ui.getByText(/رمز TOTP غير مفعّل لهذا الحساب/));
+   assert.ok(ui.getByRole('button',{name:'تسجيل الخروج من الجلسات الأخرى'}));
  }finally{cleanup()}
 });
 
