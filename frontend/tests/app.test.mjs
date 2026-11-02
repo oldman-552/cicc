@@ -360,3 +360,25 @@ test('EPSS estimate and uncertainty are visible in English and Arabic',async()=>
   assert.ok(ui.getByText(/تقدير EPSS/));
  } finally {cleanup()}
 });
+
+test('login sends optional authenticator code and clears it after a failed attempt',async()=>{
+ localStorage.clear();let submitted;
+ globalThis.fetch=async(url,options={})=>{
+  if(url==='/api/auth/session')return json(401,{});
+  if(url==='/api/auth/login'){submitted=JSON.parse(options.body);return json(401,{})}
+  return json(404,{});
+ };
+ const ui=render(React.createElement(App));
+ try{
+  await waitFor(()=>assert.ok(ui.getByLabelText('Username')));
+  fireEvent.change(ui.getByLabelText('Username'),{target:{value:'reader'}});
+  fireEvent.change(ui.getByLabelText('Password'),{target:{value:'password-long-enough'}});
+  fireEvent.change(ui.getByLabelText('Authenticator code (if enabled)'),{target:{value:'123456'}});
+  fireEvent.click(ui.getByRole('button',{name:'Sign in'}));
+  await waitFor(()=>assert.ok(ui.getByRole('alert')));
+  assert.equal(submitted.otp,'123456');
+  assert.equal(ui.getByLabelText('Authenticator code (if enabled)').value,'');
+  fireEvent.change(ui.getByLabelText('Language'),{target:{value:'ar'}});
+  assert.ok(ui.getByLabelText('رمز المصادقة (إن كان مفعّلاً)'));
+ }finally{cleanup()}
+});

@@ -5,7 +5,7 @@
 - Source refresh is manual. FIRST EPSS requires approved egress to api.first.org and cached GitHub advisories; the live FIRST API has not been tested here. GitHub API limits and network failures are possible; a failed refresh retains previous cached data and exposes source health. CISA, CVE Program and ATT&CK Git blob hashes are checked for integrity; these are not independent signatures or verification. ATT&CK refresh selects a deterministic sample of ten STIX files, not the entire catalog. CVE Program refresh requires previously cached GitHub advisories and fetches at most 10 referenced records; failure leaves the prior cache intact.
 - The Compose files are a proposed development setup only. Docker was unavailable and their runtime behavior was not verified. No production deployment guide is claimed.
 - No encrypted backup or tested restore mechanism is provided. For development SQLite, stop writes and use SQLite's online backup API; for PostgreSQL use controlled database-native backup procedures. These are operational suggestions, not verified recovery instructions. No RPO or RTO has been validated.
-- Do not expose the development server or demo mode publicly. No TLS termination, secret manager, MFA, production tenant isolation, secure evidence vault or production audit control is included.
+- Do not expose the development server or demo mode publicly. No TLS termination, secret manager, enforced enterprise MFA, production tenant isolation, secure evidence vault or production audit control is included. Optional local TOTP needs a stable external key; see [MFA.md](MFA.md).
 
 ## Disposable PostgreSQL integration test
 

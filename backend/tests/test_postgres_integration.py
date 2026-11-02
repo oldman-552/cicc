@@ -136,3 +136,28 @@ def test_postgres_local_account_disable_and_audit(monkeypatch):
     with SessionLocal() as db:
         actions=db.scalars(select(Audit.action).where(Audit.workspace_id==workspace_id,Audit.actor=='local-cli').order_by(Audit.id)).all()
         assert actions==['account.configured','account.disabled']
+
+
+def test_postgres_totp_replay_race_is_rejected(monkeypatch):
+    import base64
+    from concurrent.futures import ThreadPoolExecutor
+    import pyotp
+    from backend.app import accounts, mfa
+    from backend.app.db import SessionLocal
+    from backend.app.workspaces import create_workspace
+    monkeypatch.setattr(main,'DEMO',False)
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(b't'*32).decode())
+    suffix=uuid4().hex[:16];username='totp'+suffix;password='synthetic-password-123456'
+    secret='JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'
+    real=mfa.match_counter;clock=[6000]
+    monkeypatch.setattr(mfa,'match_counter',lambda s,c:real(s,c,now=clock[0]))
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'totp-'+suffix,'TOTP test')
+        user=accounts.configure_account(db,username,password,'admin',workspace.id)
+        mfa.enroll(db,user,secret,pyotp.TOTP(secret).generate_otp(200))
+    clock[0]=6030;code=pyotp.TOTP(secret).generate_otp(201)
+    def login():
+        with TestClient(main.app,base_url='https://testserver') as client:
+            return client.post('/api/auth/login',json={'username':username,'password':password,'otp':code}).status_code
+    with ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(lambda _:login(),range(2)))
+    assert sorted(results)==[200,401]

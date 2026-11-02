@@ -2,7 +2,7 @@
 
 CICC is an **early development foundation**, not the completed enterprise platform. This repository starts from an empty checkout and provides an integrated initial slice: a three-language command center; public GitHub advisory, CISA KEV and limited CVE Program and MITRE ATT&CK collection, plus a mocked-only FIRST EPSS adapter; investigations, source snapshots, notes and local activity timelines; manually attested asset inventory and SBOM associations; a limited 3D reference view with a 2D list; and offline SBOM metadata correlation. See [PROJECT_STATUS.md](PROJECT_STATUS.md), [IMPLEMENTATION_TRACKER.md](IMPLEMENTATION_TRACKER.md), and [BLOCKERS.md](BLOCKERS.md) for verified scope and outstanding work.
 
-> **Security warning:** This is not production-ready. Local accounts, coarse roles and experimental application-level workspace scoping exist, but there is no MFA, production tenant isolation, fine-grained permissions, encrypted storage, hardened audit, or production security review. The optional demo mode disables authentication entirely. Run only in a trusted, isolated development environment with non-sensitive data. Do not expose it publicly.
+> **Security warning:** This is not production-ready. Local accounts, coarse roles and experimental application-level workspace scoping exist, but optional local TOTP is not enforced and there is no production tenant isolation, fine-grained permissions, encrypted evidence storage, hardened audit, or production security review. The optional demo mode disables authentication entirely. Run only in a trusted, isolated development environment with non-sensitive data. Do not expose it publicly.
 
 ## Local setup
 
@@ -26,6 +26,8 @@ npm run dev
 ```
 
 Open the Vite URL. Its server proxies `/api` to the backend; browser code does not call localhost directly. API docs are at `http://127.0.0.1:8000/docs`. Roles are `admin`, `analyst` and `viewer`; creating or resetting an account uses the interactive command and revokes its sessions. Disable an account and revoke its sessions with `python -m backend.app.accounts USER --workspace SLUG --disable`. Local CLI account and workspace changes produce mutable audit records labeled `local-cli`, which does not identify or authenticate the operating-system operator. Authentication is required by default. Session cookies are Secure and SameSite=Strict; use HTTPS or a browser's localhost secure-context exception. `CICC_INSECURE_COOKIES=1` is for isolated HTTP development only.
+
+Optional local TOTP can be enrolled by a trusted server operator; it requires a stable externally managed key, and accounts without enrollment remain password-only. See [docs/MFA.md](docs/MFA.md) before enabling it.
 
 For a **disposable, non-sensitive preview only**, `CICC_DEMO_MODE=1` grants unauthenticated full access. The Arena live preview runs in this mode and is explicitly labelled. Never use it with sensitive data.
 

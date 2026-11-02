@@ -6,7 +6,7 @@ This is a thematic dependency map of the requested platform, **not a claim that 
 |---|---|---|---|
 | 1 | Core application and localization | Partial | React/Vite + FastAPI, EN/AR/FA and RTL; broaden localization and real-browser/accessibility testing. |
 | 1 | Persistence and migrations | Partial | SQLite migrations applied; baseline and workspace-guard PostgreSQL integration passed in disposable CI; Compose not tested. |
-| 1 | Identity, roles and sessions | Partial | Local accounts, scrypt, hashed sessions, CSRF, basic roles/throttling, audited trusted-local account disable/session revocation; no MFA, SSO or production controls. |
+| 1 | Identity, roles and sessions | Partial | Local accounts, scrypt, hashed sessions, CSRF, basic roles/throttling, audited trusted-local account disable/session revocation; optional TOTP with encrypted secrets and replay rejection, no mandatory MFA, SSO or production controls. |
 | 1 | Tenant isolation and fine-grained authorization | Partial | Experimental application-level workspace scoping and adversarial API tests; global source cache, database guards for selected relationships, no RLS or comprehensive constraints, no production isolation. |
 | 1 | Secure audit and secrets | Partial | Local activity entries with workspace-scoped admin pagination/filtering; unscoped auth failures omitted; no append-only protection, key management or secret vault. |
 | 2 | Source registry and provenance | Partial | Five fixed adapters, timestamps, status and cached source references; no generic registry, scheduling or connector lifecycle. |
@@ -32,7 +32,7 @@ This is a thematic dependency map of the requested platform, **not a claim that 
 | 7 | 3D universe and 2D fallback | Partial | A lazy-loaded illustrative reference graph and accessible list; no full universe, geographic intelligence or real-browser validation. |
 | 7 | Reporting and controlled sharing | Partial | JSON investigation export only; no templates, sharing policy, redaction, scheduled or signed reports. |
 | 8 | APIs and integration | Partial | Documented development API; no versioning, enterprise integration or SDK contract guarantees. |
-| 9 | Tests and security assurance | Partial | Unit/API security and simulated DOM checks; PostgreSQL flow, workspace/downgrade and selected direct-SQL guards passed in disposable CI; later account changes pending CI. Limited cross-workspace SQLite API tests; no visual browser, accessibility or comprehensive security/load and isolation assurance. |
+| 9 | Tests and security assurance | Partial | Unit/API security and simulated DOM checks; PostgreSQL flow, workspace/downgrade and selected direct-SQL guards passed in disposable CI; account changes passed in disposable CI, optional TOTP PostgreSQL race test pending CI. Limited cross-workspace SQLite API tests; no visual browser, accessibility or comprehensive security/load and isolation assurance. |
 | 10 | CI/CD | Partial | Development CI definition created but not run here; no verified releases, artifact signing or deployment pipeline. |
 | 11 | Deployment and observability | Partial | Development Dockerfiles and Compose added but untested; no production topology, monitoring, tracing or operational hardening. |
 | 12 | Backup and recovery | Missing | No automated backup, validated restore, RPO/RTO or recovery drill. |

@@ -14,7 +14,7 @@ def configure_account(db, username, password, role, workspace_id):
 
 def disable_account(db, username, workspace_id):
     username=username_normalize(username)
-    user=db.scalar(select(User).where(User.username==username,User.workspace_id==workspace_id))
+    user=db.scalar(select(User).where(User.username==username,User.workspace_id==workspace_id).with_for_update())
     if not user: raise ValueError('Account not found in workspace')
     user.active=False
     db.execute(delete(Session).where(Session.user_id==user.id))

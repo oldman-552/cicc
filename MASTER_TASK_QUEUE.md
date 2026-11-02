@@ -4,8 +4,8 @@ This is a prioritized working queue, not evidence that the complete RCTFC v4.1 s
 
 ## Active
 
-1. Validate the local account disable/audit revision in disposable PostgreSQL CI and fix any failures.
-2. Extend identity security toward MFA with secure key management, replay protection, rate limiting, recovery and tests; do not weaken existing authentication or expose secrets.
+1. Validate optional local TOTP, its replay-race test and migration on disposable PostgreSQL CI; repair any failures before proceeding.
+2. Extend identity security with mandatory policies, phishing-resistant authenticators, production key management, recovery and distributed throttling; optional local TOTP is not enterprise MFA.
 3. Continue adversarial workspace/concurrency testing; selected direct-SQL guards passed SQLite and disposable PostgreSQL CI, but production isolation and RLS remain absent.
 
 ## Pending — ordered by dependency, not approval gates

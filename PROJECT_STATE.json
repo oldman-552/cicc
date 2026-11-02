@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate account-disable and audit changes in disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor the GitHub Actions run for the account-management commit, fix failures, then implement MFA with encryption, replay protection, throttling and recovery tests without bypassing existing auth.",
+  "active_task": "Validate optional local TOTP and PostgreSQL replay concurrency test in GitHub Actions.",
+  "next_exact_action": "Inspect the GitHub Actions run for the optional TOTP commit, fix any migration/auth/concurrency failure, then implement mandatory MFA policy and secure key lifecycle without bypassing enrolled accounts.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -13,12 +13,13 @@
     "English/Arabic/Persian UI",
     "Database guards for selected workspace relationships; SQLite migration and direct-SQL tests passed",
     "Database guard migration passed direct-SQL tests in SQLite and disposable PostgreSQL CI",
-    "Trusted-local account disable and session revocation with mutable CLI audit"
+    "Trusted-local account disable and session revocation with mutable CLI audit",
+    "Optional local TOTP with encrypted seeds, replay rejection, trusted CLI enrollment/recovery, and translated login"
   ],
   "last_local_tests": {
-    "backend_passed": 63,
-    "backend_skipped_postgresql": 4,
-    "frontend_simulated_dom_passed": 11,
+    "backend_passed": 68,
+    "backend_skipped_postgresql": 5,
+    "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
     "pip_check": "passed",
@@ -27,9 +28,9 @@
   "blockers": [
     "Full original master prompt not present in checkout",
     "No live FIRST EPSS access due to outbound host policy",
-    "Production tenant isolation, MFA and protected evidence/audit missing",
     "No unattended session orchestrator configured",
-    "No local Docker or PostgreSQL; account-disable revision requires CI validation"
+    "Production tenant isolation, mandatory MFA, protected evidence and hardened audit missing",
+    "No local Docker or PostgreSQL; TOTP race test requires CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -41,6 +42,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41431887352",
       "result": "passed backend, frontend and disposable PostgreSQL jobs"
     },
-    "account_disable": "pending CI"
+    "account_disable": {
+      "commit": "d26d7b24a18ba6ab98075776a9923ef514e75475",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41432157576",
+      "result": "passed backend, frontend and disposable PostgreSQL jobs"
+    },
+    "totp": "pending CI"
   }
 }

@@ -32,7 +32,7 @@ def upsert_user(db, username: str, password: str, role: str, workspace_id: int=1
     workspace=db.get(Workspace,workspace_id)
     if not workspace or not workspace.active: raise ValueError('Workspace not available')
     password_hash=hash_password(password)
-    user=db.scalar(select(User).where(User.username==username))
+    user=db.scalar(select(User).where(User.username==username).with_for_update())
     if user:
         if user.workspace_id!=workspace_id: raise ValueError('Moving accounts between workspaces is not supported')
         user.password_hash=password_hash; user.role=role; user.active=True

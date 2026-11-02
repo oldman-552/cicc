@@ -10,8 +10,8 @@ from sqlalchemy import select, delete, func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 from .db import SessionLocal, get_db
-from .models import Workspace, User, Session, LoginAttempt, Source, Advisory, KevEntry, Investigation, Evidence, Note, Audit, Sbom, SbomComponent, SbomCandidate, MitreCve, EpssScore, Asset, InvestigationAsset, AssetSbom, AttackTechnique, InvestigationTechnique, InvestigationEvent, utcnow
-from . import security, sources, sbom, version_assessment
+from .models import Workspace, User, UserMfa, Session, LoginAttempt, Source, Advisory, KevEntry, Investigation, Evidence, Note, Audit, Sbom, SbomComponent, SbomCandidate, MitreCve, EpssScore, Asset, InvestigationAsset, AssetSbom, AttackTechnique, InvestigationTechnique, InvestigationEvent, utcnow
+from . import security, sources, sbom, version_assessment, mfa
 
 app=FastAPI(title='CICC Development API',version='0.1.0',description='Development foundation: not production-ready or multi-tenant.')
 class ApiBodyLimitMiddleware:
@@ -104,6 +104,7 @@ async def access_control(request:Request,call_next):
 class LoginBody(BaseModel):
     username:str=Field(min_length=1,max_length=64)
     password:str=Field(min_length=1,max_length=256)
+    otp:str|None=Field(default=None,max_length=20)
 class InvestigationBody(BaseModel):
     title:str=Field(min_length=3,max_length=160)
 class StatusBody(BaseModel):
@@ -144,7 +145,7 @@ def current_session(request:Request):
         row=security.get_session(db,request.cookies.get('cicc_session',''))
         if not row: raise HTTPException(401,'Authentication required')
         workspace=db.get(Workspace,row.User.workspace_id)
-        return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'workspace':{'slug':workspace.slug,'name':workspace.name}}
+        return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'mfa_enabled':db.get(UserMfa,row.User.id) is not None,'workspace':{'slug':workspace.slug,'name':workspace.name}}
 
 @app.post('/api/auth/login')
 def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(get_db)):
@@ -155,9 +156,14 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     failures=db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.account_hash==account,LoginAttempt.success.is_(False),LoginAttempt.created_at>timestamp-timedelta(minutes=15)))
     recent=db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.client_hash==client,LoginAttempt.created_at>timestamp-timedelta(minutes=1)))
     if failures>=5 or recent>=30: raise HTTPException(429,'Too many attempts')
-    user=db.scalar(select(User).join(Workspace,Workspace.id==User.workspace_id).where(User.username==username,User.active.is_(True),Workspace.active.is_(True)))
+    user=db.scalar(select(User).join(Workspace,Workspace.id==User.workspace_id).where(User.username==username,User.active.is_(True),Workspace.active.is_(True)).with_for_update(of=User))
     dummy='scrypt$16384$8$1$'+'00'*16+'$'+'00'*32
     valid=security.check_password(body.password,user.password_hash if user else dummy)
+    record=db.get(UserMfa,user.id) if user and valid else None
+    if record:
+        try:valid=mfa.consume_code(db,user.id,record,body.otp)
+        except mfa.MfaUnavailable as exc:
+            db.rollback();raise HTTPException(503,'Authentication temporarily unavailable') from exc
     db.add(LoginAttempt(account_hash=account,client_hash=client,success=bool(user and valid)))
     if not user or not valid:
         write_audit(db,'unknown','auth.login_failed',workspace_id=user.workspace_id if user else None); db.commit(); raise HTTPException(401,'Invalid credentials')
@@ -168,7 +174,7 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     response.set_cookie('cicc_session',token,secure=COOKIE_SECURE,httponly=True,samesite='strict',path='/',max_age=43200)
     response.set_cookie('cicc_csrf',csrf,secure=COOKIE_SECURE,httponly=False,samesite='strict',path='/',max_age=43200)
     workspace=db.get(Workspace,user.workspace_id)
-    return {'mode':'authenticated','role':user.role,'username':user.username,'authenticated':True,'workspace':{'slug':workspace.slug,'name':workspace.name}}
+    return {'mode':'authenticated','role':user.role,'username':user.username,'authenticated':True,'mfa_enabled':record is not None,'workspace':{'slug':workspace.slug,'name':workspace.name}}
 
 @app.post('/api/auth/logout')
 def logout(request:Request,response:Response,db:DbSession=Depends(get_db)):

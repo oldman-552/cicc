@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, Boolean, JSON, UniqueConstraint, Index, event, inspect
+from sqlalchemy import String, Text, DateTime, ForeignKey, Integer, BigInteger, LargeBinary, Boolean, JSON, UniqueConstraint, Index, event, inspect
 from sqlalchemy.orm import Mapped, mapped_column, Session as OrmSession
 from .db import Base
 
@@ -27,6 +27,14 @@ class Session(Base):
     csrf_hash: Mapped[str] = mapped_column(String(64))
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id',ondelete='CASCADE'),index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+class UserMfa(Base):
+    __tablename__='user_mfa'
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id',ondelete='CASCADE'),primary_key=True)
+    encrypted_secret: Mapped[bytes] = mapped_column(LargeBinary)
+    last_counter: Mapped[int] = mapped_column(BigInteger)
+    enabled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),default=utcnow)
+
 
 class LoginAttempt(Base):
     __tablename__='login_attempts'
