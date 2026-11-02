@@ -29,4 +29,4 @@ Source publication prevents older overlapping attempts from overwriting later co
 
 Expanded unauthorized cross-workspace asset metadata, SBOM association, and investigation evidence/technique/note cases passed SQLite; PostgreSQL cases passed: https://github.com/oldman-552/cicc/actions/runs/41440199035. No claim of comprehensive isolation.
 
-Concurrent login throttle checks passed SQLite tests, including 10 simultaneous attempts for one account and 31 for one client; PostgreSQL equivalent awaits CI. This does not establish comprehensive denial-of-service protection.
+Concurrent login throttle checks passed SQLite tests, including 10 simultaneous attempts for one account and 31 for one client; PostgreSQL equivalent passed: https://github.com/oldman-552/cicc/actions/runs/41441134477. This does not establish comprehensive denial-of-service protection.

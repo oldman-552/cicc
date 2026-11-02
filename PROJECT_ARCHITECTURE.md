@@ -34,4 +34,4 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Cross-workspace endpoint tests include unauthorized writes to selected asset and investigation child operations; expanded PostgreSQL validation passed in disposable CI.
 
-- Login throttling uses ordered transaction advisory locks on PostgreSQL or a coarse SQLite write lock. Shared database and updated workers are required; application clocks and trusted proxy configuration still matter. PostgreSQL concurrency verification is pending.
+- Login throttling uses ordered transaction advisory locks on PostgreSQL or a coarse SQLite write lock. Shared database and updated workers are required; application clocks and trusted proxy configuration still matter. Selected PostgreSQL concurrency verification passed in disposable CI.

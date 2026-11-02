@@ -51,4 +51,4 @@ The preview disables authentication and must not contain sensitive data. No enfo
 
 - Additional cross-workspace write-denial cases pass SQLite API tests; PostgreSQL validation passed ([run 41440199035](https://github.com/oldman-552/cicc/actions/runs/41440199035)).
 
-- Login throttling serializes concurrent checks in SQLite tests; PostgreSQL advisory-lock concurrency awaits CI. The mechanism is not comprehensive abuse protection.
+- Login throttling serializes concurrent checks in SQLite tests; Selected PostgreSQL advisory-lock concurrency checks passed ([run 41441134477](https://github.com/oldman-552/cicc/actions/runs/41441134477)). The mechanism is not comprehensive abuse protection.

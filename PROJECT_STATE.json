@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Verify PostgreSQL login concurrency test after fixing missing import.",
-  "next_exact_action": "Monitor CI after fixing missing security import in PostgreSQL throttle test; repair any remaining failures.",
+  "active_task": "Implement guarded disposable PostgreSQL restore rehearsal with session invalidation and synthetic CI tests.",
+  "next_exact_action": "Implement a guarded disposable PostgreSQL restore rehearsal that refuses active/non-disposable targets, invalidates restored sessions, and verifies synthetic data in PostgreSQL CI; do not claim production DR.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -28,7 +28,8 @@
     "SQLite-tested security-state session revocation and session/MFA parent immutability triggers",
     "Explicit opt-in global source operators with localized capability display and default-deny policy",
     "Source refresh publication prevents older attempts overriding later completed results on SQLite-tested paths",
-    "SQLite-tested database-issued source attempt ordering, independent of application clocks"
+    "SQLite-tested database-issued source attempt ordering, independent of application clocks",
+    "Selected concurrent account/client login throttling checks passed SQLite and disposable PostgreSQL CI"
   ],
   "last_local_tests": {
     "backend_passed": 129,
@@ -46,7 +47,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Concurrent login throttle serialization requires PostgreSQL CI; shared database, updated workers, synchronized clocks and trusted proxy config required; not comprehensive abuse protection"
+    "Login throttling requires shared database, updated workers, synchronized clocks and trusted proxy config; not comprehensive abuse protection"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -169,13 +170,13 @@
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
     "login_throttle_concurrency": {
-      "commit": "e00b65ee611b82cb0fe2cf30eda45067a1193565",
-      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440581850",
-      "result": "PostgreSQL job failed; logs inaccessible through outbound policy; backend and frontend passed"
+      "commit": "9a3210834b210779f6e6783050e3e5fba30577f0",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41441134477",
+      "result": "passed backend, frontend and disposable PostgreSQL concurrent tests"
     },
     "login_throttle_diagnostic": {
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440996613",
-      "result": "26 passed, new test failed due to missing security import; fixed in working tree"
+      "result": "26 PostgreSQL tests passed, new test failed due to missing import; fixed and verified in subsequent CI"
     }
   }
 }

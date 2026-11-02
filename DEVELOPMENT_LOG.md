@@ -155,3 +155,6 @@
 - CI run https://github.com/oldman-552/cicc/actions/runs/41440581850 failed the PostgreSQL job while backend and frontend passed. The sandbox cannot fetch the redirected Actions log host. Added a failure-only annotation containing the last 45 lines of disposable PostgreSQL test output so the error can be retrieved via GitHub check annotations; the original exit status is preserved. Diagnose and fix before considering PostgreSQL throttling verified.
 
 - Diagnostic run https://github.com/oldman-552/cicc/actions/runs/41440996613 isolated a missing `security` import in the new PostgreSQL test (26 other PostgreSQL tests passed). Added the import; the throttle concurrency test itself still requires CI verification.
+
+- Import fix `9a32108` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41441134477. Selected concurrent account/client tests passed; they do not prove production abuse resistance. Diagnostic run was unsuccessful only because of the test import; its annotation preserved the failure.
+- Next: implement a strictly guarded disposable PostgreSQL restore rehearsal, invalidate restored sessions, verify with synthetic CI data and refuse active or non-disposable targets. No production recovery claim until independently tested.
