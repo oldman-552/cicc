@@ -4,7 +4,7 @@ The authoritative detailed architecture is [docs/architecture/SYSTEM.md](docs/ar
 
 - React/TypeScript/Vite frontend: EN/AR/FA, RTL, explicit source/state labels, accessible list fallback for the illustrative 3D graph.
 - Same-origin `/api` proxy to FastAPI; local accounts, coarse RBAC and development-only workspace scoping.
-- SQLAlchemy/Alembic with SQLite by default and an unverified PostgreSQL configuration. Public source caches are global; private records are scoped in application queries. Direct database access, absent RLS and incomplete relational constraints mean no production tenant-isolation claim.
+- SQLAlchemy/Alembic with SQLite by default and PostgreSQL validated for the baseline in a disposable CI service. Public source caches are global; private records are scoped in application queries. SQLite triggers / PostgreSQL foreign keys and triggers add limited guardrails; absent RLS, privileged DB access and incomplete relational constraints mean no production tenant-isolation claim.
 - Fixed public GitHub advisory, CISA KEV, limited CVE Program and ATT&CK collectors; FIRST EPSS adapter is mocked-only and not live-verified. No automatic execution of downloaded content.
 - Investigations, snapshots/checksums, mutable timeline and audit, user-attested assets and offline limited SBOM comparison. No proof of ownership, exposure, vulnerability or tamper resistance is inferred.
 

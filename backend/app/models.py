@@ -15,7 +15,7 @@ class Workspace(Base):
 class User(Base):
     __tablename__='users'
     id: Mapped[int] = mapped_column(primary_key=True)
-    workspace_id: Mapped[int] = mapped_column(Integer,index=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey('workspaces.id',name='cicc_users_workspace_fk'),index=True)
     username: Mapped[str] = mapped_column(String(64),unique=True,index=True)
     password_hash: Mapped[str] = mapped_column(String(256))
     role: Mapped[str] = mapped_column(String(20))
@@ -73,7 +73,7 @@ class KevEntry(Base):
 class Investigation(Base):
     __tablename__='investigations'
     id: Mapped[int] = mapped_column(primary_key=True)
-    workspace_id: Mapped[int] = mapped_column(Integer,index=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey('workspaces.id',name='cicc_investigations_workspace_fk'),index=True)
     title: Mapped[str] = mapped_column(String(160))
     status: Mapped[str] = mapped_column(String(20),default='open')
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),default=utcnow)
@@ -99,7 +99,7 @@ class Note(Base):
 class Audit(Base):
     __tablename__='audit'
     id: Mapped[int] = mapped_column(primary_key=True)
-    workspace_id: Mapped[int|None] = mapped_column(Integer,index=True)
+    workspace_id: Mapped[int|None] = mapped_column(ForeignKey('workspaces.id',name='cicc_audit_workspace_fk'),index=True)
     actor: Mapped[str] = mapped_column(String(64))
     action: Mapped[str] = mapped_column(String(80))
     detail: Mapped[str] = mapped_column(Text)
@@ -108,7 +108,7 @@ class Audit(Base):
 class Sbom(Base):
     __tablename__='sboms'
     id: Mapped[int] = mapped_column(primary_key=True)
-    workspace_id: Mapped[int] = mapped_column(Integer,index=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey('workspaces.id',name='cicc_sboms_workspace_fk'),index=True)
     name: Mapped[str] = mapped_column(String(160))
     format: Mapped[str] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),default=utcnow)
@@ -156,7 +156,7 @@ class MitreCve(Base):
 class Asset(Base):
     __tablename__='assets'
     id: Mapped[int] = mapped_column(primary_key=True)
-    workspace_id: Mapped[int] = mapped_column(Integer,index=True)
+    workspace_id: Mapped[int] = mapped_column(ForeignKey('workspaces.id',name='cicc_assets_workspace_fk'),index=True)
     name: Mapped[str] = mapped_column(String(160))
     asset_type: Mapped[str] = mapped_column(String(30),index=True)
     identifier: Mapped[str] = mapped_column(String(512),index=True)

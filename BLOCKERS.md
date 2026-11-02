@@ -3,13 +3,13 @@
 | Item | State | Effect / next action |
 |---|---|---|
 | Docker | Unavailable in this environment | Dockerfiles/Compose are untested; validate image builds, networking, persistent volume behavior and PostgreSQL migrations where Docker is available. |
-| PostgreSQL | No running instance used | Dialect and concurrency behavior unverified here; a disposable PostgreSQL CI job is defined but has not run. Run integration, isolation, migration and recovery tests against a real service. |
+| PostgreSQL | Baseline passed on disposable GitHub Actions PostgreSQL, not run locally | New workspace-guard migration and concurrency behavior require validation; continue comprehensive isolation, migration and recovery testing. |
 | Browser/WebGL | No real visual browser verification performed | Test desktop/mobile layouts, RTL, keyboard use, WebGL rendering/fallback, performance and accessibility. |
 | Production identity/security | Not implemented | MFA, SSO, production tenant boundaries (experimental application-level scope is not sufficient), fine-grained permissions, immutable audit, secrets, encrypted evidence, production-grade traffic/body controls and independent security assessment are required. |
 | Asset authorization | User-attested only; no independent ownership verification or production tenant isolation | Do not treat recorded scope, SBOM links or graph links as evidence of authorization, deployment or exposure. |
 | Data coverage | Most requested public adapters not implemented | GitHub/CISA/CVE Program/ATT&CK are manual cached snapshots; ATT&CK is a 10-file sample; CVE collection is a limited selection, not a full feed. FIRST EPSS adapter is mocked-only; live endpoint is outside allowed outbound hosts. Add and validate NVD, OSV and other authorized sources. |
 | Private services | Credentials/authorization not supplied | Only required when implementing specific private integrations. Do not solicit or store credentials in chat; continue unrelated development. |
-| CI | Workflow definition added but not executed here | Verify the defined frontend, backend and PostgreSQL jobs in GitHub Actions and add comprehensive security and browser jobs. |
+| CI | Baseline GitHub Actions run passed; new guard revision CI pending | Add comprehensive security, browser, concurrency and recovery jobs. |
 | Investigation timeline | Local mutable table, no older-history backfill | Do not treat it as a tamper-evident audit trail or chain of custody. |
 | Backup/DR | No implementation or drill | Design protected backups, restoration testing and measurable RPO/RTO before deployment. |
 | SBOM precision | Only a limited npm/PyPI range subset is evaluated; JSON parsing is not isolated | Candidate identity matches cannot establish vulnerability or safety; add isolated parsing and broaden ecosystem-correct range evaluation. |

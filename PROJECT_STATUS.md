@@ -12,16 +12,17 @@
 - Paginated local investigation timeline, recorded transactionally from feature activation, not tamper-resistant and with no older-history backfill.
 - Manual user-attested asset inventory, investigation snapshots and manually attested SBOM associations; no ownership verification, discovery, scanning or exposure assessment.
 - Administrator activity view has cursor pagination and exact action filtering; logs are mutable and unscoped login failures are not shown.
+- SQLite triggers and PostgreSQL foreign keys/triggers guard selected workspace references and links after migration preflight; SQLite direct-SQL tests passed, PostgreSQL validation of this new revision pending. These are not production tenant isolation.
 - Local account CLI, scrypt passwords, expiring hashed sessions, CSRF tokens, simple roles and login throttling. Experimental application-level workspace scoping exists, but is not production tenant isolation or enterprise identity; public sources are global.
 - Offline CycloneDX/SPDX JSON top-level SBOM import with package identity and conservative limited npm/PyPI stable-version comparisons; unsupported cases remain unknown, with no confirmation of vulnerability or guarantee of safety.
-- Alembic schema migrations; SQLite development and PostgreSQL configuration; local non-tamper-resistant activity log; development Docker Compose files and CI workflow, neither run here.
+- Alembic schema migrations; SQLite development and PostgreSQL configuration; local non-tamper-resistant activity log; development Docker Compose files (not run locally) and CI workflow.
 
 ## Verification performed
 
-- SQLite upgrade with legacy records and an unsafe downgrade refusal tested; cross-workspace API tests passed. SQLite migrations applied; schema check passed. API/unit tests: 54 passed, 2 PostgreSQL-only tests skipped. UI simulated-DOM tests: 11 passed. TypeScript/Vite build passed; npm audit reported zero vulnerabilities at the time of checking.
+- SQLite upgrade with legacy records and an unsafe downgrade refusal tested; cross-workspace API tests passed. SQLite migrations applied; schema check passed. API/unit tests: 58 passed, 3 PostgreSQL-only tests skipped. UI simulated-DOM tests: 11 passed. TypeScript/Vite build passed; npm audit reported zero vulnerabilities at the time of checking.
 - The live preview's Vite proxy served `/api/overview` and `/api/sboms`; a temporary synthetic SBOM was imported, compared against cached advisory identities, read back and removed; the limited CVE source was refreshed successfully. A temporary synthetic investigation was linked to a real cached ATT&CK reference and the graph through the proxy, then removed. A separate temporary synthetic asset was linked to an investigation and SBOM through the Vite proxy, checked in the graph and then removed. A temporary checksum, report and timeline flow was also checked through the proxy and removed. The local audit records the test actions.
 - Last cached collection in the development database: 30 GitHub advisories, 1,766 CISA KEV records, 10 CVE Program records and 10 ATT&CK techniques. These are snapshots, not a live feed; the database is ignored by Git and is not part of the deliverable.
-- No visual real-browser or WebGL validation, accessibility audit, PostgreSQL integration run (including the newly defined scope and downgrade guard test), Docker run, CI execution, penetration test, load test or disaster recovery drill was performed.
+- GitHub Actions baseline commit e0a798c passed backend, frontend and disposable PostgreSQL jobs ([run 41431454188](https://github.com/oldman-552/cicc/actions/runs/41431454188)); this does not validate the subsequent guard migration until its own CI run passes. No local PostgreSQL or Docker run, real-browser/WebGL validation, accessibility audit, penetration test, load test or disaster recovery drill was performed.
 - The lazily loaded Three.js chunk is about 901 kB minified and triggers a Vite size warning. A Starlette/anyio deprecation warning appears in backend tests.
 
 ## Known boundaries

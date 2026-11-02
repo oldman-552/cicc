@@ -75,3 +75,43 @@ def test_postgres_authenticated_workspace_scope_and_downgrade_guard(monkeypatch)
     assert result.returncode!=0 and 'Cannot downgrade while additional workspaces' in result.stderr
     with SessionLocal() as db:
         assert db.scalar(select(Workspace).where(Workspace.slug=='ci-a-'+suffix)) is not None
+
+
+def test_postgres_database_workspace_guards_direct_sql():
+    """Exercise migrated constraints, not just ORM checks, on disposable PostgreSQL."""
+    from sqlalchemy import inspect, text
+    from sqlalchemy.exc import IntegrityError
+    from backend.app.db import SessionLocal, engine
+    from backend.app.models import Investigation, Asset, Sbom
+    from backend.app.workspaces import create_workspace
+    suffix=uuid4().hex[:16]
+    with SessionLocal.begin() as db:
+        a=create_workspace(db,'guard-a-'+suffix,'Guard A')
+        b=create_workspace(db,'guard-b-'+suffix,'Guard B')
+        case=Investigation(workspace_id=a.id,title='Guard test',status='open')
+        asset_a=Asset(workspace_id=a.id,name='A',asset_type='application',identifier='a-'+suffix,owner='test',scope_basis='test',status='active',created_by='test')
+        asset_b=Asset(workspace_id=b.id,name='B',asset_type='application',identifier='b-'+suffix,owner='test',scope_basis='test',status='active',created_by='test')
+        bom_a=Sbom(workspace_id=a.id,name='A',format='CycloneDX',component_count=0)
+        bom_b=Sbom(workspace_id=b.id,name='B',format='CycloneDX',component_count=0)
+        db.add_all([case,asset_a,asset_b,bom_a,bom_b]);db.flush()
+        ids={'workspace_a':a.id,'workspace_b':b.id,'case':case.id,'asset_a':asset_a.id,'asset_b':asset_b.id,'bom_a':bom_a.id,'bom_b':bom_b.id}
+    for table in ('users','investigations','assets','sboms','audit'):
+        assert any(x['name']==f'cicc_{table}_workspace_fk' for x in inspect(engine).get_foreign_keys(table))
+    with engine.begin() as db:
+        db.execute(text("INSERT INTO investigation_assets (investigation_id,asset_id,snapshot,linked_by,linked_at) VALUES (:case,:asset_a,'{}','test',now())"),ids)
+        db.execute(text("INSERT INTO asset_sboms (asset_id,sbom_id,snapshot,linked_by,linked_at) VALUES (:asset_a,:bom_a,'{}','test',now())"),ids)
+    invalid=[
+        "UPDATE investigations SET workspace_id=:workspace_b WHERE id=:case",
+        "UPDATE assets SET workspace_id=:workspace_b WHERE id=:asset_a",
+        "INSERT INTO investigation_assets (investigation_id,asset_id,snapshot,linked_by,linked_at) VALUES (:case,:asset_b,'{}','test',now())",
+        "UPDATE investigation_assets SET asset_id=:asset_b WHERE investigation_id=:case",
+        "INSERT INTO asset_sboms (asset_id,sbom_id,snapshot,linked_by,linked_at) VALUES (:asset_a,:bom_b,'{}','test',now())",
+        "UPDATE asset_sboms SET sbom_id=:bom_b WHERE asset_id=:asset_a",
+        "DELETE FROM workspaces WHERE id=:workspace_a",
+    ]
+    for sql in invalid:
+        with pytest.raises(IntegrityError):
+            with engine.begin() as db:db.execute(text(sql),ids)
+    with engine.connect() as db:
+        assert db.scalar(text('SELECT workspace_id FROM investigations WHERE id=:case'),ids)==ids['workspace_a']
+        assert db.scalar(text('SELECT asset_id FROM investigation_assets WHERE investigation_id=:case'),ids)==ids['asset_a']
