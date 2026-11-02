@@ -1,0 +1,14 @@
+# Development operations and limitations
+
+- Start locally using the README. Alembic migrations are required before the API starts accessing tables. `DATABASE_URL` defaults to `sqlite:///./cicc.db`; PostgreSQL requires a psycopg SQLAlchemy URL.
+- Create workspaces with `python -m backend.app.workspaces SLUG NAME` and accounts with `python -m backend.app.accounts USER --role admin|analyst|viewer --workspace SLUG` (defaults to `default`); the command prompts interactively and does not accept the password as an argument. No default accounts are created. Changing an account invalidates existing sessions.
+- Source refresh is manual. FIRST EPSS requires approved egress to api.first.org and cached GitHub advisories; the live FIRST API has not been tested here. GitHub API limits and network failures are possible; a failed refresh retains previous cached data and exposes source health. CISA, CVE Program and ATT&CK Git blob hashes are checked for integrity; these are not independent signatures or verification. ATT&CK refresh selects a deterministic sample of ten STIX files, not the entire catalog. CVE Program refresh requires previously cached GitHub advisories and fetches at most 10 referenced records; failure leaves the prior cache intact.
+- The Compose files are a proposed development setup only. Docker was unavailable and their runtime behavior was not verified. No production deployment guide is claimed.
+- No encrypted backup or tested restore mechanism is provided. For development SQLite, stop writes and use SQLite's online backup API; for PostgreSQL use controlled database-native backup procedures. These are operational suggestions, not verified recovery instructions. No RPO or RTO has been validated.
+- Do not expose the development server or demo mode publicly. No TLS termination, secret manager, MFA, production tenant isolation, secure evidence vault or production audit control is included.
+
+## Disposable PostgreSQL integration test
+
+A CI job defines a temporary PostgreSQL service, applies migrations and runs `backend/tests/test_postgres_integration.py`. It has not been executed in this environment. The tests **commit writes**; one also attempts a guarded downgrade. They are skipped unless `CICC_TEST_DISPOSABLE_DB=1`, `DATABASE_URL` and `CICC_TEST_POSTGRES_URL` are the same PostgreSQL URL. Use only a disposable, pre-migrated database; never use shared or production data. Passing these tests would not establish tenant isolation, production security or recovery readiness.
+
+- Public source caches and refreshes are global across workspaces; failed/unknown login audits are unscoped and not visible via workspace audit. Workspace scoping is not a production security boundary. See [WORKSPACES.md](WORKSPACES.md).

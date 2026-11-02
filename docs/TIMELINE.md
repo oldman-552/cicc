@@ -1,0 +1,5 @@
+# Investigation timeline
+
+Investigation creation, status changes, advisory references, analyst notes, user-attested asset references and ATT&CK reference links create scoped local events in the same database transaction as the underlying action. Events record an actor, timestamp, event type and limited identifiers/classification; note content is not copied into events. Duplicate/failed links do not produce successful events. The timeline endpoint returns newest-first, keyset-paginated entries. JSON reports include up to the latest 100 entries.
+
+The timeline was introduced after earlier investigations were created. **Earlier history is not backfilled**, and an empty timeline is not proof of no activity. It is a regular database table scoped at the application layer to a development workspace, not an append-only, tamper-evident or legally sufficient audit trail. Database administrators can alter it. Local role restrictions apply; there is no production tenant isolation, retention policy or forensic chain-of-custody guarantee.

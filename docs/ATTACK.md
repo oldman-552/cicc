@@ -1,0 +1,7 @@
+# MITRE ATT&CK reference subset
+
+The manual ATT&CK connector reads the official `mitre/cti` Enterprise ATT&CK STIX 2.0 repository on GitHub. Each refresh lists the `enterprise-attack/attack-pattern` directory, selects the first 10 STIX filenames lexicographically, and retrieves those fixed repository paths. This is a **small, deterministic sample**, not a comprehensive catalog, a current threat feed, or a measure of technique prevalence. If the GitHub directory reaches its 1,000-entry listing limit, collection deliberately fails rather than assuming a complete listing.
+
+Each Git blob's SHA, decoded length, STIX bundle, object identity, technique ID and selected fields are validated before a transactional refresh. The Git blob hash checks internal consistency, not a separate signature or independent verification. A failed refresh retains the prior cache. Revoked/deprecated statuses are recorded and such entries cannot be newly linked.
+
+Analysts can link cached, active technique references to investigations. The source metadata at link time is preserved as an unverified snapshot; the investigation report and graph include it as an **explicit research reference**. A link is not evidence that a technique occurred, that an asset is compromised, or that an actor is responsible. No automated attribution, exploitation, scanning or response is performed. Source descriptions are displayed as text and are not executed.

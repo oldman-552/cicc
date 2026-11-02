@@ -1,0 +1,45 @@
+# Development configuration; not production-ready.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cicc
+      POSTGRES_DB: cicc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in a local .env file}
+    volumes:
+      - cicc-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cicc -d cicc"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://cicc:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in a local .env file}@db:5432/cicc
+      CICC_DEMO_MODE: ${CICC_DEMO_MODE:-0}
+      CICC_INSECURE_COOKIES: ${CICC_INSECURE_COOKIES:-0}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    environment:
+      CICC_API_TARGET: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5173:5173"
+volumes:
+  cicc-postgres:

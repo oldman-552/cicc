@@ -1,0 +1,12 @@
+{
+  "project": "CICC",
+  "branch": "arena/435f9e1a-cicc",
+  "status": "early_development_not_production_ready",
+  "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
+  "active_task": "Strengthen and test database-level workspace relationship safeguards without claiming production isolation.",
+  "next_exact_action": "Inspect existing workspace schema and link tables; implement conservative database guards and migration preflight with SQLite tests, and define PostgreSQL validation.",
+  "completed": ["Development workspace app-level scope", "Advisory/CVE/CISA/ATT&CK sources", "Mock-tested EPSS adapter", "Investigations, evidence, assets and SBOM development slices", "English/Arabic/Persian UI"],
+  "last_local_tests": {"backend_passed": 54, "backend_skipped_postgresql": 2, "frontend_simulated_dom_passed": 11, "frontend_build": "passed with large Three.js chunk warning", "alembic_check": "passed", "npm_audit_high": "zero vulnerabilities"},
+  "blockers": ["Full original master prompt not present in checkout", "No local Docker or PostgreSQL", "No live FIRST EPSS access due to outbound host policy", "Production tenant isolation, MFA and protected evidence/audit missing", "No unattended session orchestrator configured"],
+  "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks."
+}

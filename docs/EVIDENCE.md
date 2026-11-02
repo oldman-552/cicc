@@ -1,0 +1,5 @@
+# Advisory snapshot checksum
+
+When a cached advisory is linked to an investigation, the application saves a snapshot and a SHA-256 checksum using its `cicc-json-sha256-v1` encoding: Python JSON serialization with sorted keys, UTF-8, no extra separator whitespace and no NaN values. The API recomputes the checksum when returning evidence and reports `MATCH`, `MISMATCH`, or `NOT_RECORDED`. Snapshots created before this feature have no stored checksum and remain `NOT_RECORDED`; their history is not fabricated or backfilled.
+
+This is an application-specific consistency check, not a standard canonical JSON signature. The checksum is stored in the **same database** as the snapshot, so a privileged actor could alter both. A match does not prove authenticity, independent verification, chain of custody or tamper resistance. A mismatch indicates that the current snapshot differs from the recorded checksum; it does not identify who or what changed it. ATT&CK and asset snapshots do not currently have this checksum.
