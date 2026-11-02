@@ -678,3 +678,41 @@ def test_postgres_global_source_refresh_requires_explicit_operator(monkeypatch):
         assert b.post('/api/sources/github/refresh',headers={'X-CSRF-Token':b.cookies.get('cicc_csrf')}).status_code==403
         assert a.post('/api/sources/github/refresh',headers={'X-CSRF-Token':a.cookies.get('cicc_csrf')}).status_code==200
         assert b.get('/api/advisories').json()['total']==1
+
+
+@pytest.mark.parametrize('old_fails,new_fails',[(False,False),(True,False),(False,True)])
+def test_postgres_older_source_refresh_cannot_overwrite_newer(monkeypatch,old_fails,new_fails):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event,Lock
+    from backend.app.db import SessionLocal
+    from backend.app.models import Advisory,Source
+    monkeypatch.setattr(main,'DEMO',True)
+    suffix=uuid4().hex[:16];old='old-'+suffix;new='new-'+suffix
+    first_entered,release=Event(),Event();mutex=Lock();calls=[]
+    def row(id):return {'id':id,'cve':'CVE-2025-1234','summary':'Synthetic','severity':'high','url':'https://github.com/advisories/'+id,'published_at':'2025-01-01','raw':{}}
+    def collect():
+        with mutex:calls.append(1);number=len(calls)
+        if number==1:
+            first_entered.set()
+            if not release.wait(10):raise RuntimeError('test timeout')
+            if old_fails:raise ValueError('old failure')
+            return [row(old)]
+        if new_fails:raise ValueError('new failure')
+        return [row(new)]
+    monkeypatch.setattr(main.sources,'github_advisories',collect)
+    def refresh():
+        with TestClient(main.app,base_url='https://testserver') as client:return client.post('/api/sources/github/refresh')
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first=pool.submit(refresh)
+        try:
+            assert first_entered.wait(10)
+            second=pool.submit(refresh);new_response=second.result(timeout=15)
+        finally:release.set()
+        old_response=first.result(timeout=15)
+    assert new_response.status_code==(502 if new_fails else 200)
+    assert old_response.status_code==409
+    with SessionLocal() as db:
+        assert db.get(Advisory,old) is None
+        assert (db.get(Advisory,new) is None)==new_fails
+        source=db.get(Source,'github')
+        assert source and (source.error=='new failure' if new_fails else source.error is None)

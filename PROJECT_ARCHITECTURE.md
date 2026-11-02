@@ -28,4 +28,6 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - PostgreSQL asset metadata/status updates and link creation lock the asset row to serialize selected API races; selected PostgreSQL CI checks passed, SQLite concurrency remains uncertified.
 
-- Global source cache writes are disabled by default outside demo and require both admin role and an explicit configured operator username. Caches remain shared and no enterprise operator governance or RLS is provided; PostgreSQL verification pending CI.
+- Global source cache writes are disabled by default outside demo and require both admin role and an explicit configured operator username. Caches remain shared and no enterprise operator governance or RLS is provided; PostgreSQL verification passed in disposable CI.
+
+- Source publication serializes through a source record and rejects attempts superseded by a later completed attempt; fetches can overlap and ordering depends on application wall clocks. PostgreSQL concurrency tests pending CI.

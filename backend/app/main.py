@@ -6,7 +6,7 @@ import httpx
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, StrictBool
-from sqlalchemy import select, delete, func, or_
+from sqlalchemy import select, delete, func, or_, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session as DbSession
 from .db import SessionLocal, get_db
@@ -234,6 +234,22 @@ def revoke_other_sessions(request:Request,db:DbSession=Depends(get_db)):
 def list_sources(db:DbSession=Depends(get_db)):
     return [source_dict(k,db.get(Source,k)) for k in ('github','cisa','mitre','attack','epss')]
 
+def lock_source_record(db,source_id):
+    # Atomic creation avoids concurrent first-refresh insert races. PostgreSQL
+    # row locks serialize publication; SQLite has only database-level locking.
+    db.execute(text('INSERT INTO sources(id,count) VALUES (:id,0) ON CONFLICT (id) DO NOTHING'),{'id':source_id})
+    return db.scalar(select(Source).where(Source.id==source_id).with_for_update())
+
+
+def source_attempt_superseded(source,attempted):
+    return source.last_attempt is not None and as_utc(source.last_attempt)>=attempted
+
+
+def superseded_refresh(db,request,source_id):
+    write_audit(db,request,'source.refresh_superseded',source_id);db.commit()
+    return JSONResponse({'detail':'A newer source refresh has already completed'},status_code=409)
+
+
 @app.post('/api/sources/{source_id}/refresh')
 def refresh_source(source_id:str,request:Request,db:DbSession=Depends(get_db)):
     if source_id not in ('github','cisa','mitre','attack','epss'): raise HTTPException(404,'Source not found')
@@ -251,8 +267,8 @@ def refresh_source(source_id:str,request:Request,db:DbSession=Depends(get_db)):
                 if len(identifiers)==max_ids: break
             if not identifiers: raise ValueError('Collect GitHub advisories with CVE identifiers first')
             data=sources.epss_scores(identifiers) if source_id=='epss' else [sources.mitre_cve(cve) for cve in identifiers]
-        timestamp=utcnow(); source=db.get(Source,source_id) or Source(id=source_id,count=0)
-        db.add(source)
+        timestamp=utcnow(); source=lock_source_record(db,source_id)
+        if source_attempt_superseded(source,attempted):return superseded_refresh(db,request,source_id)
         if source_id=='github':
             for item in data:
                 row=db.get(Advisory,item['id']) or Advisory(id=item['id'])
@@ -280,7 +296,8 @@ def refresh_source(source_id:str,request:Request,db:DbSession=Depends(get_db)):
         write_audit(db,request,'source.refresh',f'{source_id}: {count}'); db.commit()
         return {'imported':len(data) if source_id in ('mitre','attack') else count,'collected_at':timestamp}
     except (httpx.HTTPError,ValueError,TypeError,IntegrityError) as exc:
-        db.rollback(); source=db.get(Source,source_id) or Source(id=source_id,count=0); db.add(source)
+        db.rollback(); source=lock_source_record(db,source_id)
+        if source_attempt_superseded(source,attempted):return superseded_refresh(db,request,source_id)
         source.last_attempt=attempted; source.error='Database integrity error' if isinstance(exc,IntegrityError) else str(exc)[:300]; write_audit(db,request,'source.refresh_failed',source_id); db.commit()
         raise HTTPException(502,'Collection failed; cached data was retained') from exc
 

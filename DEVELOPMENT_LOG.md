@@ -128,3 +128,9 @@
 - Asset lock/race commit `5ae07e0` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41438744913. SQLite concurrency remains uncertified.
 - Closed a cross-workspace control gap: authenticated global cache refresh is now disabled by default and requires an admin username explicitly listed in `CICC_GLOBAL_SOURCE_OPERATORS`, plus CSRF. Demo still bypasses authentication; public caches remain globally shared and the configuration is not enterprise operator governance. UI capability and disabled reason are localized EN/AR/FA.
 - Local synthetic tests cover two workspaces, admin/analyst denial, explicit operator, CSRF, fail-closed malformed configuration and 3-language UI. PostgreSQL test awaits CI. Local backend 122 passed/22 PostgreSQL skipped; 13 frontend passed, build, Alembic/pip checks and npm audit passed.
+
+### Source refresh publication ordering
+
+- Global source operator policy commit `c9a441e` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41439176996. Caches remain globally shared; this is not production tenant isolation.
+- Fixed stale source refresh publication: source-row creation is conflict-safe, PostgreSQL publication locks the source row, and older attempts return 409 without overriding a later completed result or error. Ordering uses application wall clocks; distributed clock skew and SQLite concurrency remain limitations.
+- Synthetic SQLite tests cover older success/failure against newer success/failure. Equivalent PostgreSQL races await CI. Local backend 125 passed/25 PostgreSQL skipped; frontend 13 passed, build, Alembic/pip checks and npm audit passed.
