@@ -758,6 +758,7 @@ def test_postgres_source_sequence_survives_application_clock_regression(monkeypa
 
 
 def test_postgres_concurrent_login_limits_shared_across_requests(monkeypatch):
+    from backend.app import security
     from concurrent.futures import ThreadPoolExecutor
     from threading import Barrier
     from sqlalchemy import func,select

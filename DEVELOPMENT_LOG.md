@@ -153,3 +153,5 @@
 - SQLite concurrent tests passed (10 requests on one account, 31 from one client), including fail-closed lock error. PostgreSQL concurrent validation is pending CI. Local backend 129 passed/27 PostgreSQL skipped; frontend 13 passed, build, Alembic/pip checks and npm audit passed.
 
 - CI run https://github.com/oldman-552/cicc/actions/runs/41440581850 failed the PostgreSQL job while backend and frontend passed. The sandbox cannot fetch the redirected Actions log host. Added a failure-only annotation containing the last 45 lines of disposable PostgreSQL test output so the error can be retrieved via GitHub check annotations; the original exit status is preserved. Diagnose and fix before considering PostgreSQL throttling verified.
+
+- Diagnostic run https://github.com/oldman-552/cicc/actions/runs/41440996613 isolated a missing `security` import in the new PostgreSQL test (26 other PostgreSQL tests passed). Added the import; the throttle concurrency test itself still requires CI verification.
