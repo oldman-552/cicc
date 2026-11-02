@@ -140,3 +140,8 @@
 - Source refresh race commit `70fe13e` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41439546375.
 - Replaced wall-clock ordering with per-source monotonic database-issued tickets reserved in a short transaction before collection. Later completed tickets supersede older attempts even when application clocks regress. Displayed timestamps still use application clocks, and crashes can leave gaps. Migration `2ecb93a547b1` preserves existing source rows with zero counters and refuses downgrade while source rows exist; SQLite version must support UPDATE RETURNING. Applied to the local development database.
 - SQLite synthetic tests cover clock regression, migration preservation and downgrade refusal; PostgreSQL equivalent awaits CI. Local backend 127 passed/26 PostgreSQL skipped; 13 frontend tests, build, Alembic/pip checks and npm audit passed.
+
+### Expanded cross-workspace API checks
+
+- Database-issued source sequence commit `4d3878c` passed backend, frontend and disposable PostgreSQL CI, including clock regression: https://github.com/oldman-552/cicc/actions/runs/41439978311. Displayed timestamps remain clock-dependent.
+- Expanded cross-workspace denial checks to asset metadata and SBOM associations and investigation evidence, technique, note and asset links. SQLite API checks passed; PostgreSQL variants await CI. No RLS or comprehensive isolation claim.

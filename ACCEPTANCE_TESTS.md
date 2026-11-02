@@ -25,4 +25,6 @@ Security-state change session-revocation and security parent-immutability migrat
 
 Explicit global-source operator policy is tested locally with synthetic workspaces, CSRF and three-language UI; PostgreSQL CI passed: https://github.com/oldman-552/cicc/actions/runs/41439176996. Global caches remain shared.
 
-Source publication prevents older overlapping attempts from overwriting later completed results or errors in synthetic SQLite tests; the original PostgreSQL concurrency tests passed: https://github.com/oldman-552/cicc/actions/runs/41439546375. The subsequent sequence migration uses database-issued ordering and tests clock regression locally; PostgreSQL verification awaits CI.
+Source publication prevents older overlapping attempts from overwriting later completed results or errors in synthetic SQLite tests; the original PostgreSQL concurrency tests passed: https://github.com/oldman-552/cicc/actions/runs/41439546375. The subsequent sequence migration uses database-issued ordering and tests clock regression locally; PostgreSQL verification passed: https://github.com/oldman-552/cicc/actions/runs/41439978311.
+
+Expanded unauthorized cross-workspace asset metadata, SBOM association, and investigation evidence/technique/note cases passed SQLite; PostgreSQL cases await CI. No claim of comprehensive isolation.

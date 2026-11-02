@@ -68,6 +68,11 @@ def test_postgres_authenticated_workspace_scope_and_downgrade_guard(monkeypatch)
         assert other.status_code==201
         assert b.get(f'/api/investigations/{case_id}').status_code==404
         assert b.get(f'/api/assets/{asset_id}').status_code==404
+        assert b.put(f'/api/assets/{asset_id}/metadata',json={'name':'Other','asset_type':'application','identifier':'other.example.test','owner':'CI','scope_basis':'Disposable test','authorized':True},headers=bh).status_code==404
+        assert b.post(f'/api/assets/{asset_id}/sboms',json={'sbom_id':1,'attested':True},headers=bh).status_code==404
+        assert b.post(f'/api/investigations/{case_id}/evidence',json={'advisory_id':'GHSA-test-test-test'},headers=bh).status_code==404
+        assert b.post(f'/api/investigations/{case_id}/techniques',json={'technique_id':'T1000'},headers=bh).status_code==404
+        assert b.post(f'/api/investigations/{case_id}/notes',json={'content':'No access','classification':'UNKNOWN'},headers=bh).status_code==404
         assert b.post(f"/api/investigations/{other.json()['id']}/assets",json={'asset_id':asset_id},headers=bh).status_code==404
         assert all(x['id']!=case_id for x in b.get('/api/investigations').json())
         assert b.get('/api/audit/events').status_code==200

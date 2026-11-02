@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate database-issued source sequences and clock-regression tests on disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor CI for source attempt sequence migration and clock-regression tests, fix failures, then continue isolation and PostgreSQL recovery.",
+  "active_task": "Validate expanded cross-workspace write-denial API checks in disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor CI for expanded cross-workspace API tests; fix failures, then continue tenant isolation and PostgreSQL recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -46,7 +46,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Source attempt sequence migration and clock regression test require PostgreSQL CI; SQLite concurrency and distributed scheduling remain uncertified"
+    "Expanded cross-workspace API checks require PostgreSQL CI; SQLite concurrency and distributed scheduling remain uncertified"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -158,6 +158,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41439546375",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "source_attempt_sequences": "pending CI"
+    "source_attempt_sequences": {
+      "commit": "4d3878ceff08f3fc59909b7be1ff9b1fc03455b7",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41439978311",
+      "result": "passed backend, frontend and disposable PostgreSQL including clock regression"
+    },
+    "expanded_scope_api": "pending CI"
   }
 }

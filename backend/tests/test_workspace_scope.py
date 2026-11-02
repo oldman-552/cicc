@@ -39,6 +39,11 @@ def test_cross_workspace_access_and_association_are_denied(env,monkeypatch):
             assert second.get(url).status_code==404,url
         assert second.patch(f"/api/investigations/{case['id']}",json={'status':'closed'},headers=bh).status_code==404
         assert second.post(f"/api/investigations/{case['id']}/notes",json={'content':'No access','classification':'UNKNOWN'},headers=bh).status_code==404
+        assert second.post(f"/api/investigations/{case['id']}/evidence",json={'advisory_id':'GHSA-test-test-test'},headers=bh).status_code==404
+        assert second.post(f"/api/investigations/{case['id']}/techniques",json={'technique_id':'T1000'},headers=bh).status_code==404
+        assert second.post(f"/api/investigations/{case['id']}/assets",json={'asset_id':second_asset['id']},headers=bh).status_code==404
+        assert second.put(f"/api/assets/{asset['id']}/metadata",json={'name':'Other','asset_type':'domain','identifier':'other.example.test','owner':'Other','scope_basis':'Test scope','authorized':True},headers=bh).status_code==404
+        assert second.post(f"/api/assets/{asset['id']}/sboms",json={'sbom_id':second_bom['id'],'attested':True},headers=bh).status_code==404
         assert second.patch(f"/api/assets/{asset['id']}",json={'status':'retired'},headers=bh).status_code==404
         assert second.post(f"/api/investigations/{second_case['id']}/assets",json={'asset_id':asset['id']},headers=bh).status_code==404
         assert first.post(f"/api/investigations/{case['id']}/assets",json={'asset_id':second_asset['id']},headers=ah).status_code==404

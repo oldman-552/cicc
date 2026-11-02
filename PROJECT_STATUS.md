@@ -47,4 +47,6 @@ The preview disables authentication and must not contain sensitive data. No enfo
 
 - Global source refresh requires explicitly configured admin operators outside demo; caches remain shared, and PostgreSQL validation passed ([run 41439176996](https://github.com/oldman-552/cicc/actions/runs/41439176996)).
 
-- Superseded source refreshes no longer overwrite a later completed attempt; the original PostgreSQL concurrency tests passed ([run 41439546375](https://github.com/oldman-552/cicc/actions/runs/41439546375)). New database-issued sequence ordering removes clock dependence but awaits PostgreSQL CI.
+- Superseded source refreshes no longer overwrite a later completed attempt; the original PostgreSQL concurrency tests passed ([run 41439546375](https://github.com/oldman-552/cicc/actions/runs/41439546375)). Database-issued sequence ordering removes clock dependence and passed disposable PostgreSQL CI ([run 41439978311](https://github.com/oldman-552/cicc/actions/runs/41439978311)).
+
+- Additional cross-workspace write-denial cases pass SQLite API tests; PostgreSQL validation awaits CI.
