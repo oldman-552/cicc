@@ -163,3 +163,5 @@
 
 - Added a CI-only synthetic custom-format pg_dump/pg_restore rehearsal against the disposable service container. It creates its own random target, checks no connections before restore (not atomic), verifies a synthetic user/session, clears restored sessions, verifies the original session remains, and drops only its own target without forced disconnection. It accepts no external archive or target name. Explicit CI flags and service container ID are required, and CI checks the rehearsal is enabled.
 - Local backend 129 passed/28 PostgreSQL skipped; Alembic and pip checks passed. First PostgreSQL execution is pending CI. This is not a production recovery tool, secure backup, key custody, freshness proof or security-state reconciliation; never use with real data.
+
+- Initial rehearsal run https://github.com/oldman-552/cicc/actions/runs/41441609545 failed before job creation due to using the service `job` context in job-level environment. Moved the container ID expression to step-level environment, where the context is supported; CI verification still pending.

@@ -55,7 +55,6 @@ jobs:
       CICC_TEST_POSTGRES_URL: postgresql+psycopg://cicc_test:disposable-ci-only@localhost:5432/cicc_test
       CICC_TEST_DISPOSABLE_DB: '1'
       CICC_TEST_CI_REHEARSAL: '1'
-      CICC_TEST_POSTGRES_CONTAINER_ID: ${{ job.services.postgres.id }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -67,8 +66,12 @@ jobs:
       - run: alembic -c backend/alembic.ini upgrade head
       - run: alembic -c backend/alembic.ini check
       - name: Require disposable restore rehearsal configuration
+        env:
+          CICC_TEST_POSTGRES_CONTAINER_ID: ${{ job.services.postgres.id }}
         run: python -c "from backend.tests.test_postgres_recovery_rehearsal import ENABLED; assert ENABLED"
       - name: PostgreSQL integration tests
+        env:
+          CICC_TEST_POSTGRES_CONTAINER_ID: ${{ job.services.postgres.id }}
         run: |
           set +e
           python -m pytest -q --tb=short backend/tests/test_postgres_integration.py backend/tests/test_postgres_recovery_rehearsal.py 2>&1 | tee /tmp/cicc-postgres-pytest.log
