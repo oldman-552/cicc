@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate concurrent login throttle serialization on disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor CI for concurrent account/client login throttling tests, repair failures, then continue tenant isolation and PostgreSQL recovery.",
+  "active_task": "Diagnose and fix failed PostgreSQL login throttling CI.",
+  "next_exact_action": "Read failure annotation from diagnostic CI for PostgreSQL login throttling, repair failure, rerun all checks.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -168,6 +168,10 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440199035",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "login_throttle_concurrency": "pending CI"
+    "login_throttle_concurrency": {
+      "commit": "e00b65ee611b82cb0fe2cf30eda45067a1193565",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440581850",
+      "result": "PostgreSQL job failed; logs inaccessible through outbound policy; backend and frontend passed"
+    }
   }
 }

@@ -64,4 +64,12 @@ jobs:
       - run: pip install -r backend/requirements.txt
       - run: alembic -c backend/alembic.ini upgrade head
       - run: alembic -c backend/alembic.ini check
-      - run: python -m pytest -q backend/tests/test_postgres_integration.py
+      - name: PostgreSQL integration tests
+        run: |
+          set +e
+          python -m pytest -q --tb=short backend/tests/test_postgres_integration.py 2>&1 | tee /tmp/cicc-postgres-pytest.log
+          result=${PIPESTATUS[0]}
+          if [ "$result" -ne 0 ]; then
+            python -c "from pathlib import Path; s='\n'.join(Path('/tmp/cicc-postgres-pytest.log').read_text(errors='replace').splitlines()[-45:]); print('::error::'+s.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))"
+          fi
+          exit "$result"
