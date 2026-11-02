@@ -1,8 +1,8 @@
 """Development identity primitives; not a substitute for enterprise SSO/MFA."""
 import hashlib, hmac, re, secrets
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, delete
-from .models import User, Session, Workspace
+from sqlalchemy import select, delete, exists, or_
+from .models import User, UserMfa, Session, Workspace
 
 def digest(value: str) -> str: return hashlib.sha256(value.encode()).hexdigest()
 def username_normalize(value: str) -> str:
@@ -41,11 +41,15 @@ def upsert_user(db, username: str, password: str, role: str, workspace_id: int=1
         user=User(username=username,password_hash=password_hash,role=role,active=True,workspace_id=workspace_id); db.add(user)
     db.flush(); return user
 
-def create_session(db, user_id):
+def create_session(db, user_id, mfa_verified=False):
     token,csrf=secrets.token_urlsafe(32),secrets.token_urlsafe(32)
-    db.add(Session(token_hash=digest(token),csrf_hash=digest(csrf),user_id=user_id,expires_at=datetime.now(timezone.utc)+timedelta(hours=12)))
+    db.add(Session(token_hash=digest(token),csrf_hash=digest(csrf),user_id=user_id,mfa_verified=mfa_verified,expires_at=datetime.now(timezone.utc)+timedelta(hours=12)))
     return token,csrf
 
-def get_session(db,token):
+def get_session(db,token,require_mfa=False):
     if not token or len(token)>256: return None
-    return db.execute(select(Session,User).join(User,Session.user_id==User.id).join(Workspace,Workspace.id==User.workspace_id).where(Session.token_hash==digest(token),Session.expires_at>datetime.now(timezone.utc),User.active.is_(True),Workspace.active.is_(True))).first()
+    query=select(Session,User).join(User,Session.user_id==User.id).join(Workspace,Workspace.id==User.workspace_id).where(Session.token_hash==digest(token),Session.expires_at>datetime.now(timezone.utc),User.active.is_(True),Workspace.active.is_(True))
+    enrollment=exists(select(UserMfa.user_id).where(UserMfa.user_id==User.id))
+    query=query.where(or_(Session.mfa_verified.is_(True),~enrollment))
+    if require_mfa:query=query.where(enrollment,Session.mfa_verified.is_(True))
+    return db.execute(query).first()

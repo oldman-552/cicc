@@ -44,6 +44,9 @@ class ApiBodyLimitMiddleware:
 app.add_middleware(ApiBodyLimitMiddleware)
 
 DEMO=os.getenv('CICC_DEMO_MODE','0')=='1'
+_require_mfa=os.getenv('CICC_REQUIRE_MFA','0')
+if _require_mfa not in ('0','1'): raise RuntimeError('CICC_REQUIRE_MFA must be 0 or 1')
+REQUIRE_MFA=_require_mfa=='1'
 COOKIE_SECURE=os.getenv('CICC_INSECURE_COOKIES','0')!='1'
 
 def as_utc(value):
@@ -88,7 +91,7 @@ async def access_control(request:Request,call_next):
     if path.startswith('/api/') and path not in ('/api/health','/api/auth/session','/api/auth/login'):
         if DEMO: request.state.actor='demo'; request.state.role='admin'; request.state.workspace_id=1
         else:
-            with SessionLocal() as db: row=security.get_session(db,request.cookies.get('cicc_session',''))
+            with SessionLocal() as db: row=security.get_session(db,request.cookies.get('cicc_session',''),require_mfa=REQUIRE_MFA)
             if not row: return JSONResponse({'detail':'Authentication required'},status_code=401,headers={'Cache-Control':'no-store'})
             session,user=row; request.state.actor=user.username; request.state.role=user.role; request.state.workspace_id=user.workspace_id
             if request.method not in ('GET','HEAD','OPTIONS'):
@@ -142,7 +145,7 @@ def health(): return {'status':'ok','mode':'demo' if DEMO else 'authentication-r
 def current_session(request:Request):
     if DEMO: return {'mode':'demo','role':'admin','authenticated':False,'workspace':{'slug':'default','name':'Default development workspace'}}
     with SessionLocal() as db:
-        row=security.get_session(db,request.cookies.get('cicc_session',''))
+        row=security.get_session(db,request.cookies.get('cicc_session',''),require_mfa=REQUIRE_MFA)
         if not row: raise HTTPException(401,'Authentication required')
         workspace=db.get(Workspace,row.User.workspace_id)
         return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'mfa_enabled':db.get(UserMfa,row.User.id) is not None,'workspace':{'slug':workspace.slug,'name':workspace.name}}
@@ -160,6 +163,7 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     dummy='scrypt$16384$8$1$'+'00'*16+'$'+'00'*32
     valid=security.check_password(body.password,user.password_hash if user else dummy)
     record=db.get(UserMfa,user.id) if user and valid else None
+    if user and valid and REQUIRE_MFA and not record:valid=False
     if record:
         try:valid=mfa.consume_code(db,user.id,record,body.otp)
         except mfa.MfaUnavailable as exc:
@@ -170,7 +174,7 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     db.execute(delete(LoginAttempt).where(LoginAttempt.account_hash==account,LoginAttempt.success.is_(False)))
     previous=request.cookies.get('cicc_session','')
     if previous: db.execute(delete(Session).where(Session.token_hash==security.digest(previous)))
-    token,csrf=security.create_session(db,user.id); write_audit(db,user.username,'auth.login',workspace_id=user.workspace_id); db.commit()
+    token,csrf=security.create_session(db,user.id,mfa_verified=record is not None); write_audit(db,user.username,'auth.login',workspace_id=user.workspace_id); db.commit()
     response.set_cookie('cicc_session',token,secure=COOKIE_SECURE,httponly=True,samesite='strict',path='/',max_age=43200)
     response.set_cookie('cicc_csrf',csrf,secure=COOKIE_SECURE,httponly=False,samesite='strict',path='/',max_age=43200)
     workspace=db.get(Workspace,user.workspace_id)

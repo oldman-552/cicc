@@ -22,6 +22,7 @@ services:
       CICC_DEMO_MODE: ${CICC_DEMO_MODE:-0}
       CICC_INSECURE_COOKIES: ${CICC_INSECURE_COOKIES:-0}
       CICC_MFA_KEY: ${CICC_MFA_KEY:-}
+      CICC_REQUIRE_MFA: ${CICC_REQUIRE_MFA:-0}
     depends_on:
       db:
         condition: service_healthy

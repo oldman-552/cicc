@@ -98,3 +98,68 @@ def test_password_reset_and_disable_reenable_do_not_remove_mfa(env,monkeypatch):
     clock[0]=3030
     response=client.post('/api/auth/login',json={'username':'user1','password':'replacement-password-123','otp':pyotp.TOTP(SECRET).generate_otp(101)})
     assert response.status_code==200 and response.json()['role']=='viewer' and response.json()['mfa_enabled'] is True
+
+
+def test_failed_enrollment_never_persists_or_revokes_session(env,monkeypatch,capsys):
+    client,factory=env;monkeypatch.setattr(main,'DEMO',False)
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(b'a'*32).decode())
+    with factory.begin() as db:accounts.configure_account(db,'user1',PASSWORD,'admin',1)
+    assert client.post('/api/auth/login',json={'username':'user1','password':PASSWORD}).status_code==200
+    monkeypatch.setattr(mfa,'SessionLocal',factory)
+    monkeypatch.setattr('sys.argv',['mfa','enroll','user1'])
+    monkeypatch.setattr(mfa.pyotp,'random_base32',lambda:SECRET)
+    monkeypatch.setattr(mfa.getpass,'getpass',lambda _: 'not-a-code')
+    with pytest.raises(SystemExit,match='Invalid authenticator code'):mfa.main()
+    capsys.readouterr()
+    assert client.get('/api/auth/session').status_code==200
+    with factory() as db:
+        assert not db.scalar(select(UserMfa))
+        assert not db.scalar(select(Audit).where(Audit.action=='account.mfa_enabled'))
+    monkeypatch.delenv('CICC_MFA_KEY')
+    with pytest.raises(SystemExit,match='key is not configured'):mfa.main()
+    assert 'otpauth://' not in capsys.readouterr().out
+
+
+def test_enforced_mfa_blocks_password_only_and_preexisting_sessions(env,monkeypatch):
+    client,factory=env;monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(b'a'*32).decode())
+    real=mfa.match_counter;clock=[3000];monkeypatch.setattr(mfa,'match_counter',lambda secret,code:real(secret,code,now=clock[0]))
+    with factory.begin() as db:accounts.configure_account(db,'user1',PASSWORD,'admin',1)
+    assert client.post('/api/auth/login',json={'username':'user1','password':PASSWORD}).status_code==200
+    assert client.get('/api/investigations').status_code==200
+    monkeypatch.setattr(main,'REQUIRE_MFA',True)
+    assert client.get('/api/auth/session').status_code==401
+    assert client.get('/api/investigations').status_code==401
+    assert client.post('/api/auth/login',json={'username':'user1','password':PASSWORD}).status_code==401
+    with factory.begin() as db:
+        user=db.scalar(select(User).where(User.username=='user1'))
+        mfa.enroll(db,user,SECRET,pyotp.TOTP(SECRET).generate_otp(100))
+    clock[0]=3030
+    assert client.post('/api/auth/login',json={'username':'user1','password':PASSWORD,'otp':pyotp.TOTP(SECRET).generate_otp(101)}).status_code==200
+    assert client.get('/api/auth/session').json()['mfa_enabled'] is True
+    with factory.begin() as db:
+        user=db.scalar(select(User).where(User.username=='user1'))
+        mfa.reset(db,user)
+    assert client.get('/api/auth/session').status_code==401
+    assert client.post('/api/auth/login',json={'username':'user1','password':PASSWORD}).status_code==401
+
+
+def test_enrolled_account_rejects_unverified_session_even_without_enforced_policy(env,monkeypatch):
+    from backend.app import security
+    client,factory=env;monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(b'a'*32).decode())
+    real=mfa.match_counter;monkeypatch.setattr(mfa,'match_counter',lambda secret,code:real(secret,code,now=3000))
+    with factory.begin() as db:
+        user=accounts.configure_account(db,'user1',PASSWORD,'admin',1)
+        mfa.enroll(db,user,SECRET,pyotp.TOTP(SECRET).generate_otp(100))
+        # Simulate a stale/racing session created without the second factor.
+        token,_=security.create_session(db,user.id,mfa_verified=False)
+    assert client.get('/api/auth/session',headers={'Cookie':f'cicc_session={token}'}).status_code==401
+    assert client.get('/api/investigations',headers={'Cookie':f'cicc_session={token}'}).status_code==401
+
+
+def test_invalid_mfa_policy_fails_startup(tmp_path):
+    import subprocess,sys
+    environment={**os.environ,'CICC_REQUIRE_MFA':'true','DATABASE_URL':f'sqlite:///{tmp_path}/invalid.db'}
+    result=subprocess.run([sys.executable,'-c','import backend.app.main'],env=environment,capture_output=True,text=True)
+    assert result.returncode!=0 and 'CICC_REQUIRE_MFA must be 0 or 1' in result.stderr

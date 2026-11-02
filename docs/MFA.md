@@ -1,6 +1,6 @@
 # Optional local TOTP (development only)
 
-CICC supports optional six-digit, 30-second TOTP for locally managed accounts. It is **not enforced by policy**: existing and new accounts without enrollment still authenticate with a password alone. Enrollment is performed by a trusted server operator, not through a self-service UI. This does not constitute enterprise identity, SSO, phishing-resistant authentication or production security certification. The preview's demo mode bypasses all authentication, including TOTP; never use it with sensitive information.
+CICC supports optional six-digit, 30-second TOTP for locally managed accounts. By default it is **not enforced**: existing and new accounts without enrollment still authenticate with a password alone. A deployment-wide opt-in enforcement flag is available as described below. Enrollment is performed by a trusted server operator, not through a self-service UI. This does not constitute enterprise identity, SSO, phishing-resistant authentication or production security certification. The preview's demo mode bypasses all authentication, including TOTP; never use it with sensitive information.
 
 ## Key management
 
@@ -11,6 +11,10 @@ export CICC_MFA_KEY="$(python -c 'import secrets,base64; print(base64.urlsafe_b6
 ```
 
 The example generates a **new** key each time. Do not regenerate it on restart once accounts are enrolled. A trusted operator must securely preserve and provision the same key to every relevant API instance and CLI process. The database stores TOTP seeds encrypted with AES-256-GCM, random nonces and user-bound associated data. Other application data is not encrypted by this feature. Environment variables may be visible to system/container administrators; no managed secret vault, rotation mechanism or secure backup is provided. A missing, invalid or wrong key returns an authentication-unavailable error for enrolled accounts and **does not bypass MFA**. Loss of the key makes enrolled accounts unable to sign in until a trusted local recovery reset; safe recovery and rotation procedures are not certified.
+
+## Optional enforcement
+
+To require enrolled TOTP for every authenticated local account, first enroll each required account, then set `CICC_REQUIRE_MFA=1` in the API environment and restart it. A login without enrollment is rejected, and password-only sessions are rejected while this policy is active. Sessions record whether TOTP was verified; existing sessions are conservatively marked unverified by the migration. Regardless of the policy, sessions for an enrolled account must have passed TOTP. This setting defaults to `0`; invalid values fail server startup. Do not enable it until the stable key and a trusted recovery process are in place, or administrators can be locked out. `CICC_DEMO_MODE=1` still bypasses authentication even if enforcement is enabled. This is a basic deployment-wide switch, not granular or phishing-resistant enterprise MFA policy.
 
 ## Enroll and recover
 
@@ -28,4 +32,4 @@ A trusted local administrator may recover a lost authenticator by removing enrol
 python -m backend.app.mfa reset USER --workspace SLUG --confirm-reset
 ```
 
-Re-enroll promptly. This reset is intentionally powerful: trusted server/database access can bypass MFA. It generates a mutable `local-cli` audit event without independently identifying the operator. Enrollment and reset revoke sessions transactionally; requests already in flight may still finish. SQLite does not provide PostgreSQL-style row locks and concurrent enrollment/login is not certified. PostgreSQL uses row locks for account changes and login, plus an atomic replay counter; concurrency must be tested in the target deployment. No recovery codes, WebAuthn, MFA enforcement, verified operator identity, key rotation, distributed lockout or security audit are included. Downgrading the MFA migration is refused while any enrollment remains, to avoid silently disabling MFA.
+Re-enroll promptly. This reset is intentionally powerful: trusted server/database access can bypass MFA. It generates a mutable `local-cli` audit event without independently identifying the operator. Enrollment and reset revoke sessions transactionally; requests already in flight may still finish. SQLite does not provide PostgreSQL-style row locks and concurrent enrollment/login is not certified. PostgreSQL uses row locks for account changes and login, plus an atomic replay counter; concurrency must be tested in the target deployment. No recovery codes, WebAuthn, MFA enforcement, verified operator identity, key rotation, distributed lockout or security audit are included. Downgrading either MFA/session-assurance migration is refused while any enrollment remains, to avoid silently disabling MFA.

@@ -161,3 +161,34 @@ def test_postgres_totp_replay_race_is_rejected(monkeypatch):
             return client.post('/api/auth/login',json={'username':username,'password':password,'otp':code}).status_code
     with ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(lambda _:login(),range(2)))
     assert sorted(results)==[200,401]
+
+
+def test_postgres_mfa_policy_invalidates_unverified_sessions(monkeypatch):
+    import base64
+    import pyotp
+    from sqlalchemy import select
+    from backend.app import accounts, mfa
+    from backend.app.db import SessionLocal
+    from backend.app.models import Session,User
+    from backend.app.workspaces import create_workspace
+    monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(b't'*32).decode())
+    suffix=uuid4().hex[:16];username='policy'+suffix;password='synthetic-password-123456'
+    secret='JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';real=mfa.match_counter;clock=[6000]
+    monkeypatch.setattr(mfa,'match_counter',lambda s,c:real(s,c,now=clock[0]))
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'policy-'+suffix,'Policy test')
+        accounts.configure_account(db,username,password,'admin',workspace.id)
+    with TestClient(main.app,base_url='https://testserver') as client:
+        assert client.post('/api/auth/login',json={'username':username,'password':password}).status_code==200
+        monkeypatch.setattr(main,'REQUIRE_MFA',True)
+        assert client.get('/api/auth/session').status_code==401
+        assert client.post('/api/auth/login',json={'username':username,'password':password}).status_code==401
+        with SessionLocal.begin() as db:
+            user=db.scalar(select(User).where(User.username==username).with_for_update())
+            mfa.enroll(db,user,secret,pyotp.TOTP(secret).generate_otp(200));user_id=user.id
+        clock[0]=6030
+        assert client.post('/api/auth/login',json={'username':username,'password':password,'otp':pyotp.TOTP(secret).generate_otp(201)}).status_code==200
+        assert client.get('/api/auth/session').json()['mfa_enabled'] is True
+        with SessionLocal() as db:
+            assert db.scalar(select(Session.mfa_verified).where(Session.user_id==user_id)) is True
