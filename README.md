@@ -72,3 +72,5 @@ cd frontend && npm test && npm run build && npm audit --audit-level=high
 ```
 
 The frontend tests use a simulated DOM; they do not establish real-browser, WebGL, accessibility or performance compliance. PostgreSQL, Docker, disaster recovery, tenant isolation and production security testing have not been verified.
+
+Development-only, unencrypted SQLite copy/verification and recovery limitations: [docs/RECOVERY.md](docs/RECOVERY.md). This is not a production backup service.

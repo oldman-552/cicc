@@ -16,3 +16,5 @@ A CI job defines a temporary PostgreSQL service, applies migrations and runs `ba
 ## Development health checks
 
 `GET /api/health` is liveness only and does not query the database. `GET /api/ready` checks basic database access and two identity-schema columns. Outside demo mode it also validates the MFA key if policy is enforced or an account is enrolled, and attempts to decrypt one enrolled seed when present. It returns only `ready` or `not_ready`, without database/secret details. A successful result does **not** verify every migration, trigger, account, source, authorization policy, production dependency or disaster-recovery capability. It checks one MFA record only. The proposed Compose health check uses this readiness endpoint, but Docker/Compose execution has not been verified here.
+
+- The [SQLite development copy utility](RECOVERY.md) does not cover PostgreSQL, encryption, authentication or production recovery. Restoring an old snapshot can revive revoked sessions and security settings.

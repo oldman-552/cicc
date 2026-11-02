@@ -48,3 +48,9 @@
 - Readiness commit `c50728f` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41433984885.
 - Added global, offline-only MFA seed key rotation with operator downtime acknowledgment, bounded enrollment count, validation before mutation, one database transaction, per-workspace mutable audit counts and session revocation. The tool cannot verify downtime, distribute secrets, or resolve an uncertain commit automatically. No production recovery/rotation drill is claimed.
 - Tests cover multi-workspace rotation, failed decryption, transaction rollback, no key in output and CLI scope validation. Local result: 82 backend passed, 8 PostgreSQL skipped; 12 frontend tests, build, schema check, pip check and npm audit passed. A PostgreSQL rotation test is pending CI.
+
+### SQLite development copy and recovery limitations
+
+- Offline MFA key rotation commit `14a904f` passed GitHub Actions backend, frontend and disposable PostgreSQL, including the rotation test: https://github.com/oldman-552/cicc/actions/runs/41434379208.
+- Added a trusted-local SQLite copy-to-new/verify CLI with exclusive creation, owner-only permissions, integrity checking and cleanup of partial files on handled failures. Tests cover committed WAL data, no-overwrite and symlink behavior, application identity data in a restored synthetic snapshot, and session revival. It is unencrypted, not authenticating, does not include MFA keys or support PostgreSQL, and is not a production backup/recovery solution.
+- Local result: 87 backend passed, 8 PostgreSQL skipped; 12 frontend tests, build, schema check, pip check and npm audit passed. CI for the SQLite copy revision is pending.

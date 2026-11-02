@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate offline MFA key rotation in disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor GitHub Actions for the offline key rotation commit and fix any failure; then continue phishing-resistant identity, verified recovery and workspace concurrency tests.",
+  "active_task": "Validate SQLite copy and restore-to-new tests in CI.",
+  "next_exact_action": "Monitor GitHub Actions for the SQLite copy commit and fix any failure; then advance phishing-resistant identity, PostgreSQL recovery design and workspace concurrency testing.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -18,10 +18,11 @@
     "Optional deployment-wide TOTP enforcement and session MFA assurance (local tests passed)",
     "Authenticated user self-service revocation of other sessions and localized TOTP status",
     "Limited database, identity schema and MFA key readiness probe",
-    "Offline global TOTP key rotation with transactional rollback and session revocation"
+    "Offline global TOTP key rotation with transactional rollback and session revocation",
+    "Development SQLite copy/verify-to-new CLI with restore limitations and synthetic tests"
   ],
   "last_local_tests": {
-    "backend_passed": 82,
+    "backend_passed": 87,
     "backend_skipped_postgresql": 8,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
@@ -34,7 +35,7 @@
     "No live FIRST EPSS access due to outbound host policy",
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
-    "No local Docker or PostgreSQL; offline key rotation revision requires CI validation"
+    "No local Docker or PostgreSQL; SQLite copy revision requires CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -71,6 +72,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41433984885",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "mfa_key_rotation": "pending CI"
+    "mfa_key_rotation": {
+      "commit": "14a904f20cbfafc55c34fa3196c9f5368f9c5841",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41434379208",
+      "result": "passed backend, frontend and disposable PostgreSQL rotation test"
+    },
+    "sqlite_copy": "pending CI"
   }
 }
