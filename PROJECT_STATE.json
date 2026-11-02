@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate workspace lifecycle and PostgreSQL login/deactivation serialization in CI.",
-  "next_exact_action": "Monitor GitHub Actions for the workspace lifecycle commit; fix any failure, then continue adversarial tenant testing, enterprise identity and recovery work.",
+  "active_task": "Adversarial PostgreSQL testing of scoped link creation versus parent deletion.",
+  "next_exact_action": "Add disposable PostgreSQL concurrency tests for scoped link creation versus parent deletion, repair confirmed integrity failures, then verify CI and continue enterprise identity and recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -36,8 +36,8 @@
     "No live FIRST EPSS access due to outbound host policy",
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
-    "No local Docker or PostgreSQL; workspace lifecycle concurrency test requires CI validation",
-    "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified"
+    "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified",
+    "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -89,6 +89,10 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435065254",
       "result": "passed backend, frontend and disposable PostgreSQL account concurrency test"
     },
-    "workspace_lifecycle": "pending CI"
+    "workspace_lifecycle": {
+      "commit": "d087fce8affd4f6cdc10f8d7bb43c9f848302f4d",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435452428",
+      "result": "passed backend, frontend and disposable PostgreSQL selected login/deactivation race"
+    }
   }
 }
