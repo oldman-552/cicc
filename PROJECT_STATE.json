@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Add disposable PostgreSQL restore failure-injection tests.",
-  "next_exact_action": "Add CI-only truncated/invalid synthetic dump restore failure tests, verifying temporary target cleanup and original source preservation; run disposable PostgreSQL CI.",
+  "active_task": "Validate invalid/truncated synthetic PostgreSQL restore failure tests in disposable CI.",
+  "next_exact_action": "Monitor disposable PostgreSQL CI for invalid/truncated synthetic restore and cleanup tests, diagnose failures and repair; no real data.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -34,7 +34,7 @@
   ],
   "last_local_tests": {
     "backend_passed": 129,
-    "backend_skipped_postgresql": 28,
+    "backend_skipped_postgresql": 30,
     "frontend_simulated_dom_passed": 13,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -49,7 +49,8 @@
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
     "Login throttling requires shared database, updated workers, synchronized clocks and trusted proxy config; not comprehensive abuse protection",
-    "Synthetic PostgreSQL recovery rehearsal passed CI but its activity precheck is not atomic; no production DR, anti-rollback or security-state reconciliation"
+    "Synthetic PostgreSQL recovery rehearsal passed CI but its activity precheck is not atomic; no production DR, anti-rollback or security-state reconciliation",
+    "Invalid/truncated synthetic PostgreSQL restore failure cases require CI; crash cleanup is not guaranteed"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -188,6 +189,7 @@
     "postgres_recovery_initial": {
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41441609545",
       "result": "workflow rejected before job creation; service context moved to step level, fix awaiting CI"
-    }
+    },
+    "postgres_recovery_negative": "pending CI"
   }
 }

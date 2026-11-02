@@ -24,3 +24,5 @@
 - Source refresh ordering uses database-issued sequences, but displayed timestamps depend on application clocks; distributed scheduling and SQLite concurrency are not certified. PostgreSQL sequence CI passed.
 
 - Synthetic disposable PostgreSQL restore rehearsal passed CI; an activity check is non-atomic, and it is not a production restore tool or a secure DR solution.
+
+- Invalid/truncated synthetic PostgreSQL restore tests are awaiting CI and do not cover crash recovery or guarantee cleanup on host failure.

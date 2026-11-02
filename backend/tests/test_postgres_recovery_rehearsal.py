@@ -64,3 +64,37 @@ def test_synthetic_postgres_dump_restore_revokes_sessions():
             with engine.connect().execution_options(isolation_level='AUTOCOMMIT') as db:
                 # No forced termination: fail if unexpected connections remain.
                 db.execute(text(f'DROP DATABASE "{target}"'))
+
+
+@pytest.mark.parametrize('damage',['invalid','truncated'])
+def test_failed_synthetic_restore_cleans_target_and_preserves_source(damage):
+    url=make_url(URL)
+    assert url.get_backend_name()=='postgresql' and url.host in ('localhost','127.0.0.1')
+    assert url.database=='cicc_test' and url.username=='cicc_test'
+    suffix=uuid4().hex;target='cicc_restore_'+suffix;username='restorefail'+suffix[:16]
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'fail-'+suffix[:24],'Synthetic failed recovery')
+        user=accounts.configure_account(db,username,'synthetic-password-123456','admin',workspace.id)
+        token,_=security.create_session(db,user.id);db.flush()
+    if damage=='truncated':
+        dump=subprocess.run(['docker','exec',CONTAINER,'pg_dump','--format=custom','--no-owner','--no-privileges','-U','cicc_test','-d','cicc_test'],capture_output=True,timeout=60)
+        assert dump.returncode==0,dump.stderr.decode(errors='replace')[-4000:]
+        assert dump.stdout.startswith(b'PGDMP') and len(dump.stdout)<16*1024*1024
+        archive=dump.stdout[:len(dump.stdout)//2]
+    else:archive=b'not a valid PostgreSQL archive'
+    created=False
+    try:
+        with engine.connect().execution_options(isolation_level='AUTOCOMMIT') as db:
+            db.execute(text(f'CREATE DATABASE "{target}"'));created=True
+            assert db.scalar(text('SELECT count(*) FROM pg_stat_activity WHERE datname=:target'),{'target':target})==0
+        restore=subprocess.run(['docker','exec','-i',CONTAINER,'pg_restore','--exit-on-error','--no-owner','--no-privileges','-U','cicc_test','-d',target],input=archive,capture_output=True,timeout=60)
+        assert restore.returncode!=0,'invalid archive unexpectedly restored'
+    finally:
+        if created:
+            with engine.connect().execution_options(isolation_level='AUTOCOMMIT') as db:
+                db.execute(text(f'DROP DATABASE "{target}"'))
+    with engine.connect() as db:
+        assert db.scalar(text('SELECT count(*) FROM pg_database WHERE datname=:target'),{'target':target})==0
+    with SessionLocal() as db:
+        assert security.get_session(db,token) is not None
+        assert db.scalar(select(User).where(User.username==username)) is not None

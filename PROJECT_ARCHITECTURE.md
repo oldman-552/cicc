@@ -37,3 +37,5 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 - Login throttling uses ordered transaction advisory locks on PostgreSQL or a coarse SQLite write lock. Shared database and updated workers are required; application clocks and trusted proxy configuration still matter. Selected PostgreSQL concurrency verification passed in disposable CI.
 
 - CI-only PostgreSQL synthetic dump/restore rehearsal uses a newly created random target, invalidates restored sessions and avoids forced disconnection; its connection check is not atomic. PostgreSQL execution passed disposable CI; not production DR.
+
+- Synthetic invalid/truncated PostgreSQL dump failure and temporary-target cleanup tests are CI-only and awaiting CI.
