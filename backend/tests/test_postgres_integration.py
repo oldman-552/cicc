@@ -73,7 +73,7 @@ def test_postgres_authenticated_workspace_scope_and_downgrade_guard(monkeypatch)
         assert b.get('/api/audit/events').status_code==200
         assert all(x['actor']!='cia'+suffix for x in b.get('/api/audit/events').json()['items'])
     result=subprocess.run([sys.executable,'-m','alembic','-c','backend/alembic.ini','downgrade','d98dbca43b80'],capture_output=True,text=True,env=os.environ.copy())
-    assert result.returncode!=0 and 'Cannot downgrade while additional workspaces' in result.stderr
+    assert result.returncode!=0 and ('Cannot downgrade while workspace-bound child records exist' in result.stderr or 'Cannot downgrade while additional workspaces' in result.stderr)
     with SessionLocal() as db:
         assert db.scalar(select(Workspace).where(Workspace.slug=='ci-a-'+suffix)) is not None
 
@@ -399,3 +399,86 @@ def test_postgres_scoped_link_insert_races_parent_delete():
     with SessionLocal() as db:
         assert db.scalar(text('SELECT count(*) FROM investigation_assets WHERE investigation_id=:case AND asset_id=:asset'),{'case':case_id,'asset':first_id})==1
         assert db.scalar(text('SELECT count(*) FROM investigation_assets WHERE investigation_id=:case AND asset_id=:asset'),{'case':case_id,'asset':second_id})==0
+
+
+@pytest.mark.parametrize('parent_table', ['assets', 'sboms'])
+def test_postgres_asset_sbom_link_races_parent_delete(parent_table):
+    """Disposable PostgreSQL only: both sides and both transaction orderings."""
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
+    from backend.app.db import SessionLocal
+    from backend.app.models import Asset, Sbom
+    from backend.app.workspaces import create_workspace
+
+    suffix=uuid4().hex[:16]
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'bom-race-'+suffix,'SBOM race')
+        pairs=[]
+        for number in (1,2):
+            asset=Asset(workspace_id=workspace.id,name='Test',asset_type='application',identifier=f'{number}-{suffix}',owner='test',scope_basis='test',status='active',created_by='test')
+            bom=Sbom(workspace_id=workspace.id,name='Test',format='CycloneDX',component_count=0)
+            db.add_all([asset,bom]);db.flush();pairs.append((asset.id,bom.id))
+    def insert(db,pair):
+        db.execute(text("INSERT INTO asset_sboms(asset_id,sbom_id,snapshot,linked_by,linked_at) VALUES (:asset,:bom,'{}','test',NOW())"),{'asset':pair[0],'bom':pair[1]})
+    def delete(db,pair):
+        parent_id=pair[0] if parent_table=='assets' else pair[1]
+        db.execute(text(f'DELETE FROM {parent_table} WHERE id=:id'),{'id':parent_id})
+    def run_first(operation,ready,release,pair):
+        with SessionLocal.begin() as db:
+            operation(db,pair);ready.set()
+            if not release.wait(10):raise RuntimeError('test timeout')
+    def run_second(operation,started,pair):
+        started.set()
+        try:
+            with SessionLocal.begin() as db:operation(db,pair)
+        except IntegrityError:return False
+        return True
+    for first,second,pair in ((insert,delete,pairs[0]),(delete,insert,pairs[1])):
+        ready,started,release=Event(),Event(),Event()
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            a=pool.submit(run_first,first,ready,release,pair)
+            try:
+                assert ready.wait(10)
+                b=pool.submit(run_second,second,started,pair);assert started.wait(10)
+            finally:release.set()
+            a.result(timeout=15);assert not b.result(timeout=15)
+    with SessionLocal() as db:
+        for pair,expected in zip(pairs,(1,0)):
+            assert db.scalar(text('SELECT count(*) FROM asset_sboms WHERE asset_id=:asset AND sbom_id=:bom'),{'asset':pair[0],'bom':pair[1]})==expected
+
+
+def test_postgres_child_parent_guards_prevent_reassignment():
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
+    from backend.app.db import SessionLocal,engine
+    from backend.app.models import Investigation,Sbom,SbomComponent
+    from backend.app.workspaces import create_workspace
+    suffix=uuid4().hex[:16]
+    with SessionLocal.begin() as db:
+        a=create_workspace(db,'child-a-'+suffix,'Child A');b=create_workspace(db,'child-b-'+suffix,'Child B')
+        c1=Investigation(workspace_id=a.id,title='one',status='open');c2=Investigation(workspace_id=b.id,title='two',status='open')
+        s1=Sbom(workspace_id=a.id,name='one',format='CycloneDX',component_count=1);s2=Sbom(workspace_id=b.id,name='two',format='CycloneDX',component_count=1)
+        db.add_all([c1,c2,s1,s2]);db.flush()
+        k1=SbomComponent(sbom_id=s1.id,name='one');k2=SbomComponent(sbom_id=s2.id,name='two');db.add_all([k1,k2]);db.flush()
+        ids={'case1':c1.id,'case2':c2.id,'sbom1':s1.id,'sbom2':s2.id,'component1':k1.id,'component2':k2.id}
+    statements=[
+        ("INSERT INTO evidence(investigation_id,advisory_id,snapshot,added_at) VALUES (:case1,'A','{}',NOW()) RETURNING id",'evidence','investigation_id','case2'),
+        ("INSERT INTO notes(investigation_id,content,classification,created_at) VALUES (:case1,'test','UNKNOWN',NOW()) RETURNING id",'notes','investigation_id','case2'),
+        ("INSERT INTO investigation_events(investigation_id,event_type,actor,details,created_at) VALUES (:case1,'test','test','{}',NOW()) RETURNING id",'investigation_events','investigation_id','case2'),
+        ("INSERT INTO investigation_techniques(investigation_id,technique_id,snapshot,linked_by,linked_at) VALUES (:case1,'T1000','{}','test',NOW()) RETURNING id",'investigation_techniques','investigation_id','case2'),
+        ("INSERT INTO sbom_candidates(component_id,advisory_id,snapshot) VALUES (:component1,'A','{}') RETURNING id",'sbom_candidates','component_id','component2'),
+    ]
+    targets=[]
+    with engine.begin() as db:
+        for sql,table,column,target in statements:
+            targets.append((table,column,target,db.scalar(text(sql),ids)))
+        targets.append(('sbom_components','sbom_id','sbom2',ids['component1']))
+    for table,column,target,id in targets:
+        with engine.begin() as db:db.execute(text(f'UPDATE {table} SET {column}={column} WHERE id=:id'),{'id':id})
+        with pytest.raises(IntegrityError,match='child parent reassignment forbidden'):
+            with engine.begin() as db:db.execute(text(f'UPDATE {table} SET {column}=:parent WHERE id=:id'),{'id':id,'parent':ids[target]})
+    with engine.begin() as db:
+        note_id=next(id for table,_,_,id in targets if table=='notes')
+        db.execute(text("UPDATE notes SET content='edited' WHERE id=:id"),{'id':note_id})

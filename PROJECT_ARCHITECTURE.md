@@ -13,3 +13,5 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 - Development SQLite copy-to-new uses the SQLite backup API and integrity check; it does not encrypt, authenticate, cover PostgreSQL or invalidate restored sessions. See `docs/RECOVERY.md`.
 
 - Trusted workspace disable/enable revokes workspace sessions transactionally. PostgreSQL login and account configuration acquire a workspace row lock first; this serializes workspace logins and is not load-tested. SQLite has no equivalent row locks, and direct SQL state edits bypass this workflow.
+
+- Selected investigation/SBOM child parent references have ORM checks and migration-installed immutability triggers. This cannot prevent delete/reinsert or prove prior ownership; PostgreSQL verification is pending CI.

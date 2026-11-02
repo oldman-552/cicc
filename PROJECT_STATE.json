@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Extend adversarial PostgreSQL scoped relationship concurrency tests.",
-  "next_exact_action": "Test concurrent asset–SBOM link creation versus parent deletion on disposable PostgreSQL, repair confirmed issues, verify CI, then continue tenant isolation, identity and recovery.",
+  "active_task": "Validate child parent guard migration and asset–SBOM concurrency in disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor GitHub Actions for child parent guard and asset–SBOM race tests; repair any failure, then continue tenant isolation and recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -23,8 +23,8 @@
     "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering"
   ],
   "last_local_tests": {
-    "backend_passed": 89,
-    "backend_skipped_postgresql": 11,
+    "backend_passed": 92,
+    "backend_skipped_postgresql": 14,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -37,7 +37,8 @@
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified",
-    "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI"
+    "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
+    "Child parent guard and asset–SBOM race tests require disposable PostgreSQL CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -98,6 +99,7 @@
       "commit": "a2ad650f5fe45bc0d4a1f2c7668c2b4dc4402076",
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435722572",
       "result": "passed backend, frontend and disposable PostgreSQL scoped-link race test"
-    }
+    },
+    "child_parent_guards_and_sbom_races": "pending CI"
   }
 }

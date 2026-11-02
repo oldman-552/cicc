@@ -75,3 +75,9 @@
 - PostgreSQL-only tests are skipped locally (11 total); last complete local run had 89 backend passes.
 
 - Scoped-link concurrency commit `a2ad650` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41435722572. Both tested orderings prevented a dangling investigation–asset link; this is not comprehensive isolation assurance.
+
+### Child parent guard and asset–SBOM race tests
+
+- Implemented the saved checkpoint: disposable PostgreSQL race tests cover insert-versus-delete of either asset or SBOM. Pending CI because PostgreSQL is unavailable locally.
+- Added migration `a63c9f170b42` and ORM guards preventing parent reassignment for six workspace-derived child tables. Preflight refuses orphaned rows and downgrade refuses removal while those tables have records; existing ownership provenance cannot be reconstructed. Applied migration to the development SQLite database.
+- Synthetic SQLite tests cover direct SQL, no-op changes, rollback/downgrade refusal, migration preflight and ORM guard. Local backend 92 passed/14 PostgreSQL skipped; 12 frontend tests, build, Alembic and pip checks, npm audit passed. Three.js chunk warning remains. This is not production isolation.

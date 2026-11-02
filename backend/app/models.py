@@ -238,3 +238,6 @@ def require_explicit_workspace(session, _flush_context, _instances):
     for obj in session.dirty:
         if isinstance(obj,(User,Investigation,Asset,Sbom)) and inspect(obj).attrs.workspace_id.history.has_changes():
             raise ValueError('Moving records between workspaces is not supported')
+        for model,column in ((Evidence,'investigation_id'),(Note,'investigation_id'),(InvestigationEvent,'investigation_id'),(InvestigationTechnique,'investigation_id'),(SbomComponent,'sbom_id'),(SbomCandidate,'component_id')):
+            if isinstance(obj,model) and inspect(obj).attrs[column].history.has_changes():
+                raise ValueError('Moving workspace-bound child records is not supported')

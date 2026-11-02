@@ -16,3 +16,5 @@
 | Bundle size | Vite reports large lazy-loaded Three.js chunk (~901 kB minified) | Measure real browser performance and optimize without misrepresenting results. |
 
 - Direct database workspace deactivation bypasses the audited CLI and can revive unexpired sessions on reactivation. Selected PostgreSQL CLI lifecycle concurrency checks passed in disposable CI; SQLite concurrent login/lifecycle safety is not certified.
+
+- Child-parent immutability guard and asset–SBOM concurrency revision requires disposable PostgreSQL CI validation; it cannot prevent privileged SQL or delete/reinsert and is not RLS.
