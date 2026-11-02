@@ -18,7 +18,7 @@ def test_role_migration_rejects_invalid_existing_roles_without_changes(tmp_path)
 
 
 def test_role_guards_block_direct_sql_and_downgrade(tmp_path):
-    path=tmp_path/'roles.db';result=migrate(path,'upgrade','head');assert result.returncode==0,result.stderr
+    path=tmp_path/'roles.db';result=migrate(path,'upgrade','c1af7842d90b');assert result.returncode==0,result.stderr
     with sqlite3.connect(path) as db:
         for id,role in enumerate(('admin','analyst','viewer'),1):
             db.execute('INSERT INTO users(id,workspace_id,username,password_hash,role,active) VALUES (?,1,?,?,?,1)',(id,'user'+str(id),'hash',role))

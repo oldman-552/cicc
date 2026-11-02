@@ -12,7 +12,7 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Development SQLite copy-to-new uses the SQLite backup API and integrity check; it does not encrypt, authenticate, cover PostgreSQL or invalidate restored sessions. See `docs/RECOVERY.md`.
 
-- Trusted workspace disable/enable revokes workspace sessions transactionally. PostgreSQL login and account configuration acquire a workspace row lock first; this serializes workspace logins and is not load-tested. SQLite has no equivalent row locks, and direct SQL state edits bypass this workflow.
+- Trusted workspace disable/enable revokes workspace sessions transactionally. PostgreSQL login and account configuration acquire a workspace row lock first; this serializes workspace logins and is not load-tested. SQLite has no equivalent row locks; database triggers also revoke sessions for ordinary workspace state changes, but direct edits lack CLI audit and privileged database access can bypass safeguards.
 
 - Selected investigation/SBOM child parent references have ORM checks and migration-installed immutability triggers. This cannot prevent delete/reinsert or prove prior ownership; PostgreSQL direct-SQL verification passed on a disposable CI database.
 
@@ -20,6 +20,8 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Experimental SQLite encrypted backups use AES-256-GCM with protected plaintext staging and external backup keys; replay, stale security state, key custody and PostgreSQL recovery remain unresolved. No independent cryptographic review.
 
-- Login and session validation fail closed on unknown role values; supported CLI account updates revoke sessions, while direct database edits bypass that workflow.
+- Login and session validation fail closed on unknown role values; supported CLI account updates revoke sessions, database triggers also revoke on ordinary security-state changes, but direct edits lack CLI audit and privileged access can bypass safeguards.
 
-- Migration c1af7842d90b restricts persisted role values via SQLite triggers / a PostgreSQL check, with preflight and guarded downgrade; PostgreSQL validation pending CI. Direct assignment of another valid role is not prevented.
+- Migration c1af7842d90b restricts persisted role values via SQLite triggers / a PostgreSQL check, with preflight and guarded downgrade; PostgreSQL validation passed in disposable CI. Direct assignment of another valid role is not prevented.
+
+- Migration ea2dd04051c8 adds transactional revocation triggers for ordinary account/workspace/MFA security-state changes and prevents security-record parent reassignment. PostgreSQL validation pending CI; not RLS or tamper-resistant audit.

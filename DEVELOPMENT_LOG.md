@@ -105,3 +105,9 @@
 - Unknown-role fail-closed commit `cfb48c4` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41437432959.
 - Added migration `c1af7842d90b`: preflight rejects unsupported persisted roles; SQLite triggers or a PostgreSQL check constrain future roles; downgrade refuses while accounts exist. This does not stop a privileged database actor from granting another valid role. Applied locally to development SQLite.
 - SQLite migration tests cover unsupported legacy roles, direct SQL insert/update, valid roles and guarded downgrade. Backend 111 passed/15 PostgreSQL skipped; 12 frontend tests, build, Alembic and pip checks and npm audit passed. PostgreSQL migration check pending CI.
+
+### Security-state database revocation
+
+- Account role-guard commit `cb2d4d7` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41437758338.
+- Added migration `ea2dd04051c8`: transactional database triggers revoke affected sessions for ordinary account identity/role/password/active, workspace active, and MFA enrollment/secret changes; unchanged values and MFA counter updates do not revoke. Session and MFA user references are immutable on update. This does not audit direct SQL, repair historical state, stop privileged actors or certify SQLite concurrency.
+- Migrated SQLite tests cover scoped revocation, rollback, no-op and replay-counter updates, MFA lifecycle, parent immutability and guarded downgrade. Local backend 120 passed/16 PostgreSQL skipped; Alembic and pip checks passed. PostgreSQL trigger verification pending CI.

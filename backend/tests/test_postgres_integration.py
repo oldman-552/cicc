@@ -501,3 +501,45 @@ def test_postgres_invalid_role_is_rejected_by_database(monkeypatch):
         with pytest.raises(IntegrityError):
             with SessionLocal.begin() as db:db.execute(update(User).where(User.username==username).values(role='unexpected'))
         assert client.get('/api/auth/session').json()['role']=='viewer'
+
+
+def test_postgres_security_state_changes_revoke_sessions_and_keep_other_workspace():
+    from sqlalchemy import text,select
+    from sqlalchemy.exc import IntegrityError
+    from backend.app import accounts,security,workspaces
+    from backend.app.db import SessionLocal
+    from backend.app.models import Session
+    suffix=uuid4().hex[:16]
+    with SessionLocal.begin() as db:
+        a=workspaces.create_workspace(db,'state-a-'+suffix,'State A');b=workspaces.create_workspace(db,'state-b-'+suffix,'State B')
+        first=accounts.configure_account(db,'statea'+suffix,'synthetic-password-123456','viewer',a.id)
+        second=accounts.configure_account(db,'stateb'+suffix,'synthetic-password-123456','viewer',b.id)
+        uid,other,workspace_id=first.id,second.id,a.id
+        token,_=security.create_session(db,uid);other_token,_=security.create_session(db,other)
+    with SessionLocal.begin() as db:db.execute(text("UPDATE users SET role='admin' WHERE id=:id"),{'id':uid})
+    with SessionLocal() as db:
+        assert security.get_session(db,token) is None and security.get_session(db,other_token) is not None
+    with SessionLocal.begin() as db:
+        token,_=security.create_session(db,uid);db.flush()
+        with pytest.raises(IntegrityError):
+            with db.begin_nested():db.execute(text('UPDATE sessions SET user_id=:other WHERE token_hash=:token'),{'other':other,'token':security.digest(token)})
+        db.execute(text("INSERT INTO user_mfa(user_id,encrypted_secret,last_counter,enabled_at) VALUES (:id,:secret,1,NOW())"),{'id':uid,'secret':b'synthetic-ciphertext'})
+    with SessionLocal() as db:assert security.get_session(db,token) is None
+    with SessionLocal.begin() as db:
+        token,_=security.create_session(db,uid,mfa_verified=True);db.flush()
+        db.execute(text('UPDATE user_mfa SET last_counter=2 WHERE user_id=:id'),{'id':uid})
+        assert db.scalar(select(Session).where(Session.token_hash==security.digest(token))) is not None
+        with pytest.raises(IntegrityError):
+            with db.begin_nested():db.execute(text('UPDATE user_mfa SET user_id=:other WHERE user_id=:id'),{'other':other,'id':uid})
+        db.execute(text('UPDATE user_mfa SET encrypted_secret=:secret WHERE user_id=:id'),{'id':uid,'secret':b'new-synthetic-ciphertext'})
+    with SessionLocal() as db:assert security.get_session(db,token) is None
+    with SessionLocal.begin() as db:
+        token,_=security.create_session(db,uid,mfa_verified=True);db.flush()
+        db.execute(text('DELETE FROM user_mfa WHERE user_id=:id'),{'id':uid})
+    with SessionLocal() as db:assert security.get_session(db,token) is None
+    with SessionLocal.begin() as db:
+        token,_=security.create_session(db,uid);db.flush()
+        db.execute(text('UPDATE workspaces SET active=false WHERE id=:id'),{'id':workspace_id})
+        db.execute(text('UPDATE workspaces SET active=true WHERE id=:id'),{'id':workspace_id})
+    with SessionLocal() as db:
+        assert security.get_session(db,token) is None and security.get_session(db,other_token) is not None
