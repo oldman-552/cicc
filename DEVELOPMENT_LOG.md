@@ -111,3 +111,8 @@
 - Account role-guard commit `cb2d4d7` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41437758338.
 - Added migration `ea2dd04051c8`: transactional database triggers revoke affected sessions for ordinary account identity/role/password/active, workspace active, and MFA enrollment/secret changes; unchanged values and MFA counter updates do not revoke. Session and MFA user references are immutable on update. This does not audit direct SQL, repair historical state, stop privileged actors or certify SQLite concurrency.
 - Migrated SQLite tests cover scoped revocation, rollback, no-op and replay-counter updates, MFA lifecycle, parent immutability and guarded downgrade. Local backend 120 passed/16 PostgreSQL skipped; Alembic and pip checks passed. PostgreSQL trigger verification pending CI.
+
+### Direct workspace-change/login race
+
+- Security-state revocation migration commit `1c047d5` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41438149536. Privileged DB actions and unaudited direct changes remain outside comprehensive isolation assurance.
+- Added PostgreSQL-only coverage for login against direct SQL workspace deactivation in both transaction orderings, including reactivation without session revival; CI is required to validate it. Local baseline 120 backend passed, 17 PostgreSQL skipped.

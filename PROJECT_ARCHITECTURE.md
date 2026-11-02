@@ -24,4 +24,4 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Migration c1af7842d90b restricts persisted role values via SQLite triggers / a PostgreSQL check, with preflight and guarded downgrade; PostgreSQL validation passed in disposable CI. Direct assignment of another valid role is not prevented.
 
-- Migration ea2dd04051c8 adds transactional revocation triggers for ordinary account/workspace/MFA security-state changes and prevents security-record parent reassignment. PostgreSQL validation pending CI; not RLS or tamper-resistant audit.
+- Migration ea2dd04051c8 adds transactional revocation triggers for ordinary account/workspace/MFA security-state changes and prevents security-record parent reassignment. Selected PostgreSQL checks passed in disposable CI; further direct workspace/login race testing is pending CI. Not RLS or tamper-resistant audit.

@@ -543,3 +543,59 @@ def test_postgres_security_state_changes_revoke_sessions_and_keep_other_workspac
         db.execute(text('UPDATE workspaces SET active=true WHERE id=:id'),{'id':workspace_id})
     with SessionLocal() as db:
         assert security.get_session(db,token) is None and security.get_session(db,other_token) is not None
+
+
+def test_postgres_direct_workspace_state_change_serializes_with_login(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from sqlalchemy import select,text
+    from backend.app import accounts,security,workspaces
+    from backend.app.db import SessionLocal
+    from backend.app.models import Session
+    monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    suffix=uuid4().hex[:16];username='direct'+suffix;password='synthetic-password-123456'
+    with SessionLocal.begin() as db:
+        workspace=workspaces.create_workspace(db,'direct-'+suffix,'Direct state race')
+        user=accounts.configure_account(db,username,password,'admin',workspace.id);uid=user.id;wid=workspace.id
+    in_check=Event();release=Event();started=Event();original=security.check_password
+    def held_check(value,encoded):
+        in_check.set()
+        if not release.wait(10):raise RuntimeError('test timeout')
+        return original(value,encoded)
+    monkeypatch.setattr(security,'check_password',held_check)
+    def login():
+        with TestClient(main.app,base_url='https://testserver') as client:
+            response=client.post('/api/auth/login',json={'username':username,'password':password})
+            return response.status_code,client.cookies.get('cicc_session')
+    def deactivate():
+        started.set()
+        with SessionLocal.begin() as db:db.execute(text('UPDATE workspaces SET active=false WHERE id=:id'),{'id':wid})
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        a=pool.submit(login)
+        try:
+            assert in_check.wait(10)
+            b=pool.submit(deactivate);assert started.wait(10)
+        finally:release.set()
+        status,token=a.result(timeout=15);b.result(timeout=15)
+    assert status==200 and token
+    with SessionLocal.begin() as db:db.execute(text('UPDATE workspaces SET active=true WHERE id=:id'),{'id':wid})
+    with SessionLocal() as db:
+        assert security.get_session(db,token) is None
+        assert not db.scalars(select(Session).where(Session.user_id==uid)).all()
+    monkeypatch.setattr(security,'check_password',original)
+    disabled=Event();release_disable=Event();started_login=Event()
+    def hold_direct_deactivation():
+        with SessionLocal.begin() as db:
+            db.execute(text('UPDATE workspaces SET active=false WHERE id=:id'),{'id':wid});disabled.set()
+            if not release_disable.wait(10):raise RuntimeError('test timeout')
+    def later_login():started_login.set();return login()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        a=pool.submit(hold_direct_deactivation)
+        try:
+            assert disabled.wait(10)
+            b=pool.submit(later_login);assert started_login.wait(10)
+        finally:release_disable.set()
+        a.result(timeout=15);status,_=b.result(timeout=15)
+    assert status==401
+    with SessionLocal.begin() as db:db.execute(text('UPDATE workspaces SET active=true WHERE id=:id'),{'id':wid})
+    with SessionLocal() as db:assert not db.scalars(select(Session).where(Session.user_id==uid)).all()
