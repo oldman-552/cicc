@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate scoped link versus parent deletion PostgreSQL concurrency in CI.",
-  "next_exact_action": "Monitor GitHub Actions for the scoped-link concurrency test; fix any failures, then continue isolation, enterprise identity and recovery work.",
+  "active_task": "Extend adversarial PostgreSQL scoped relationship concurrency tests.",
+  "next_exact_action": "Test concurrent asset–SBOM link creation versus parent deletion on disposable PostgreSQL, repair confirmed issues, verify CI, then continue tenant isolation, identity and recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -94,6 +94,10 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435452428",
       "result": "passed backend, frontend and disposable PostgreSQL selected login/deactivation race"
     },
-    "scoped_link_concurrency": "pending CI"
+    "scoped_link_concurrency": {
+      "commit": "a2ad650f5fe45bc0d4a1f2c7668c2b4dc4402076",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435722572",
+      "result": "passed backend, frontend and disposable PostgreSQL scoped-link race test"
+    }
   }
 }

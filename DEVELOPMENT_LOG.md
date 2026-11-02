@@ -73,3 +73,5 @@
 
 - Added a disposable PostgreSQL test for both orderings of scoped investigation–asset link creation and asset deletion; it checks that a committed link prevents deletion and a committed deletion prevents link creation. PostgreSQL CI is required to determine the outcome; this is not comprehensive tenant isolation testing.
 - PostgreSQL-only tests are skipped locally (11 total); last complete local run had 89 backend passes.
+
+- Scoped-link concurrency commit `a2ad650` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41435722572. Both tested orderings prevented a dangling investigation–asset link; this is not comprehensive isolation assurance.

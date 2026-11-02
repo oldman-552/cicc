@@ -9,7 +9,7 @@
 
 ## Disposable PostgreSQL integration test
 
-A CI job defines a temporary PostgreSQL service, applies migrations and runs `backend/tests/test_postgres_integration.py`. Selected revisions through workspace lifecycle commit d087fce passed GitHub Actions against a disposable PostgreSQL service; these checks were not run locally. Later changes require their own CI run. The tests **commit writes**; one also attempts a guarded downgrade. They are skipped unless `CICC_TEST_DISPOSABLE_DB=1`, `DATABASE_URL` and `CICC_TEST_POSTGRES_URL` are the same PostgreSQL URL. Use only a disposable, pre-migrated database; never use shared or production data. Passing these tests would not establish tenant isolation, production security or recovery readiness.
+A CI job defines a temporary PostgreSQL service, applies migrations and runs `backend/tests/test_postgres_integration.py`. Selected revisions through scoped-link race test commit a2ad650 passed GitHub Actions against a disposable PostgreSQL service; these checks were not run locally. Later changes require their own CI run. The tests **commit writes**; one also attempts a guarded downgrade. They are skipped unless `CICC_TEST_DISPOSABLE_DB=1`, `DATABASE_URL` and `CICC_TEST_POSTGRES_URL` are the same PostgreSQL URL. Use only a disposable, pre-migrated database; never use shared or production data. Passing these tests would not establish tenant isolation, production security or recovery readiness.
 
 - Public source caches and refreshes are global across workspaces; failed/unknown login audits are unscoped and not visible via workspace audit. Workspace scoping is not a production security boundary. See [WORKSPACES.md](WORKSPACES.md).
 
