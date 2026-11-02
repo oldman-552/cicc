@@ -38,4 +38,4 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - CI-only PostgreSQL synthetic dump/restore rehearsal uses a newly created random target, invalidates restored sessions and avoids forced disconnection; its connection check is not atomic. PostgreSQL execution passed disposable CI; not production DR.
 
-- Synthetic invalid/truncated PostgreSQL dump failure and temporary-target cleanup tests are CI-only and awaiting CI.
+- Synthetic invalid/truncated PostgreSQL dump failure and temporary-target cleanup tests are CI-only and passed disposable PostgreSQL CI.

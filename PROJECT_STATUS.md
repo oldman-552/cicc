@@ -55,4 +55,4 @@ The preview disables authentication and must not contain sensitive data. No enfo
 
 - A synthetic disposable PostgreSQL dump/restore rehearsal is implemented in CI tests; it passed disposable CI ([run 41441849186](https://github.com/oldman-552/cicc/actions/runs/41441849186)) and is not a production restore tool.
 
-- Synthetic PostgreSQL failed-restore cleanup tests are added but await CI.
+- Synthetic PostgreSQL failed-restore cleanup tests passed disposable PostgreSQL CI ([run 41442223061](https://github.com/oldman-552/cicc/actions/runs/41442223061)).

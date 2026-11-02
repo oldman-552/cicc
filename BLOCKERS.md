@@ -25,4 +25,4 @@
 
 - Synthetic disposable PostgreSQL restore rehearsal passed CI; an activity check is non-atomic, and it is not a production restore tool or a secure DR solution.
 
-- Invalid/truncated synthetic PostgreSQL restore tests are awaiting CI and do not cover crash recovery or guarantee cleanup on host failure.
+- Invalid/truncated synthetic PostgreSQL restore tests passed disposable CI and do not cover crash recovery or guarantee cleanup on host failure.

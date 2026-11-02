@@ -171,3 +171,6 @@
 - Fixed slug commit `ef783e1` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41441849186, including synthetic dump/restore and session deletion. This is not a production DR procedure; the activity check is non-atomic and stale security state remains unhandled. Next: exercise truncated/invalid synthetic dump failure, cleanup, and source preservation in disposable CI.
 
 - Added CI-only negative restore cases for invalid and truncated synthetic archives. Tests create and drop their own disposable target without forced disconnect, and verify synthetic source account/session remain; crash cleanup is not guaranteed. PostgreSQL execution is pending CI; local backend 129 passed/30 PostgreSQL skipped, Alembic and pip checks passed.
+
+- Negative recovery cases commit `645a265` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41442223061. Test verifies cleanup after invalid/truncated archives and preservation of source sessions, not process-crash cleanup or production DR.
+- Next: extend disposable restore rehearsal to quarantine restored accounts/workspaces, then verify login denial and session revocation; do not claim that security-state reconciliation is solved.

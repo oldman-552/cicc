@@ -33,4 +33,4 @@ Concurrent login throttle checks passed SQLite tests, including 10 simultaneous 
 
 A CI-only synthetic PostgreSQL dump/restore rehearsal, including session invalidation, passed disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41441849186; local environment skipped it. It is not a production DR exercise.
 
-Two CI-only synthetic PostgreSQL failed-restore cases (invalid/truncated archives) await CI; they check target cleanup and source preservation.
+Two CI-only synthetic PostgreSQL failed-restore cases (invalid/truncated archives) passed disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41442223061; they check target cleanup and source preservation.

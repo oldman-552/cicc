@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate invalid/truncated synthetic PostgreSQL restore failure tests in disposable CI.",
-  "next_exact_action": "Monitor disposable PostgreSQL CI for invalid/truncated synthetic restore and cleanup tests, diagnose failures and repair; no real data.",
+  "active_task": "Extend disposable PostgreSQL restore rehearsal with security-state quarantine and synthetic login denial tests.",
+  "next_exact_action": "Extend the CI-only synthetic restore rehearsal to quarantine restored accounts/workspaces before exposure, verify login denial and session revocation, and run disposable PostgreSQL CI; reconciliation and production DR remain unsolved.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -30,7 +30,8 @@
     "Source refresh publication prevents older attempts overriding later completed results on SQLite-tested paths",
     "SQLite-tested database-issued source attempt ordering, independent of application clocks",
     "Selected concurrent account/client login throttling checks passed SQLite and disposable PostgreSQL CI",
-    "Synthetic PostgreSQL dump/restore rehearsal with restored session invalidation passed disposable CI; not production DR"
+    "Synthetic PostgreSQL dump/restore rehearsal with restored session invalidation passed disposable CI; not production DR",
+    "Synthetic invalid/truncated PostgreSQL restore failure, target cleanup and source preservation passed disposable CI"
   ],
   "last_local_tests": {
     "backend_passed": 129,
@@ -50,7 +51,7 @@
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
     "Login throttling requires shared database, updated workers, synchronized clocks and trusted proxy config; not comprehensive abuse protection",
     "Synthetic PostgreSQL recovery rehearsal passed CI but its activity precheck is not atomic; no production DR, anti-rollback or security-state reconciliation",
-    "Invalid/truncated synthetic PostgreSQL restore failure cases require CI; crash cleanup is not guaranteed"
+    "Synthetic PostgreSQL restore failure tests passed, but crash cleanup is not guaranteed"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -190,6 +191,10 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41441609545",
       "result": "workflow rejected before job creation; service context moved to step level, fix awaiting CI"
     },
-    "postgres_recovery_negative": "pending CI"
+    "postgres_recovery_negative": {
+      "commit": "645a2650b0f94956b47358584daeb52598003d87",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41442223061",
+      "result": "passed backend, frontend and disposable PostgreSQL synthetic failure tests"
+    }
   }
 }
