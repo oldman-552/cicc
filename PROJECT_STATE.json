@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate development SQLite restore-to-new session invalidation in CI.",
-  "next_exact_action": "Monitor CI for development SQLite restore commit, repair failures, then continue production tenant isolation and authenticated encrypted backup design.",
+  "active_task": "Validate experimental authenticated SQLite backup in CI.",
+  "next_exact_action": "Monitor CI for experimental encrypted SQLite backup, repair failures; then pursue tenant isolation and PostgreSQL recovery without claiming production readiness.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -21,10 +21,11 @@
     "Offline global TOTP key rotation with transactional rollback and session revocation",
     "Development SQLite copy/verify-to-new CLI with restore limitations and synthetic tests",
     "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering",
-    "Development SQLite restore-to-new with saved session invalidation and explicit stale-security warning"
+    "Development SQLite restore-to-new with saved session invalidation and explicit stale-security warning",
+    "Experimental authenticated encrypted SQLite backups with external key, protected plaintext staging and session-invalidating restore"
   ],
   "last_local_tests": {
-    "backend_passed": 95,
+    "backend_passed": 105,
     "backend_skipped_postgresql": 14,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
@@ -39,7 +40,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
-    "SQLite restore revision needs CI validation; backups remain unauthenticated and unencrypted, PostgreSQL production recovery absent"
+    "Experimental encrypted SQLite backups need CI validation and independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -106,6 +107,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41436533643",
       "result": "passed backend, frontend and disposable PostgreSQL guard and race tests"
     },
-    "sqlite_restore": "pending CI"
+    "sqlite_restore": {
+      "commit": "057aca57bd9d9d3a69466b88ef1986056bc87144",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41436843876",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "encrypted_sqlite_backup": "pending CI"
   }
 }

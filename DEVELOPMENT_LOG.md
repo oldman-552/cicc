@@ -87,3 +87,9 @@
 - Child-parent guard and asset–SBOM race commit `9a2c12d` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41436533643. These controls are not RLS.
 - Added staged SQLite restore to a new file. It checks recorded migration head and database integrity, removes every saved session transactionally, writes a mutable unscoped recovery audit entry and publishes by non-overwriting hard link. It requires explicit acknowledgment that passwords, MFA and audit history may be stale. No encryption, backup authentication, production recovery or PostgreSQL recovery is claimed.
 - Synthetic tests cover all-workspace revocation, unchanged source, schema mismatch, existing target, failed sanitization and CLI acknowledgment. Local result 95 backend passed, 14 PostgreSQL skipped; 12 frontend passed, build, schema check, pip check and npm audit passed. CI pending.
+
+### Experimental authenticated SQLite backup
+
+- SQLite restore commit `057aca5` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41436843876.
+- Added a trusted-local AES-256-GCM encrypted SQLite backup format with an external 32-byte key, authenticated header and non-overwriting publication. Restore authenticates before publishing and then invalidates saved sessions. Protected plaintext staging, separate MFA/backup keys, stale security state and replay risk are explicitly documented; this is neither a production backup service nor a PostgreSQL solution.
+- Synthetic tests cover round-trip, session revocation, wrong key, modified header/nonce/ciphertext/tag, truncation, size limit, collisions, key lengths and acknowledgments. Local backend 105 passed/14 PostgreSQL skipped; CI pending. No independent cryptographic review or production recovery drill.

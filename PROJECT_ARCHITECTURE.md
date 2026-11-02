@@ -17,3 +17,5 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 - Selected investigation/SBOM child parent references have ORM checks and migration-installed immutability triggers. This cannot prevent delete/reinsert or prove prior ownership; PostgreSQL direct-SQL verification passed on a disposable CI database.
 
 - The development SQLite restore-to-new operation stages the copy, checks its recorded revision and invalidates saved sessions before atomic publication; it does not authenticate backups, reconcile stale credentials or provide production recovery.
+
+- Experimental SQLite encrypted backups use AES-256-GCM with protected plaintext staging and external backup keys; replay, stale security state, key custody and PostgreSQL recovery remain unresolved. No independent cryptographic review.
