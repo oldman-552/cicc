@@ -3,19 +3,21 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate database workspace guards on disposable PostgreSQL CI and fix any failures.",
-  "next_exact_action": "Monitor the GitHub Actions run for the workspace-guard commit; inspect and fix PostgreSQL migration or test failures, then expand authorization and concurrency tests.",
+  "active_task": "Validate account-disable and audit changes in disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor the GitHub Actions run for the account-management commit, fix failures, then implement MFA with encryption, replay protection, throttling and recovery tests without bypassing existing auth.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
     "Mock-tested EPSS adapter",
     "Investigations, evidence, assets and SBOM development slices",
     "English/Arabic/Persian UI",
-    "Database guards for selected workspace relationships; SQLite migration and direct-SQL tests passed"
+    "Database guards for selected workspace relationships; SQLite migration and direct-SQL tests passed",
+    "Database guard migration passed direct-SQL tests in SQLite and disposable PostgreSQL CI",
+    "Trusted-local account disable and session revocation with mutable CLI audit"
   ],
   "last_local_tests": {
-    "backend_passed": 58,
-    "backend_skipped_postgresql": 3,
+    "backend_passed": 63,
+    "backend_skipped_postgresql": 4,
     "frontend_simulated_dom_passed": 11,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -27,13 +29,18 @@
     "No live FIRST EPSS access due to outbound host policy",
     "Production tenant isolation, MFA and protected evidence/audit missing",
     "No unattended session orchestrator configured",
-    "No local Docker or PostgreSQL; latest workspace guard revision requires CI validation"
+    "No local Docker or PostgreSQL; account-disable revision requires CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
     "baseline_commit": "e0a798c7eec4a8f332ac85bad6f41ca19f74e72e",
     "baseline_run_url": "https://github.com/oldman-552/cicc/actions/runs/41431454188",
     "baseline_result": "passed backend, frontend and disposable PostgreSQL jobs",
-    "new_workspace_guards": "pending CI"
+    "workspace_guards": {
+      "commit": "035e26f7e5e813091016848cfcd0eaa22142af50",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41431887352",
+      "result": "passed backend, frontend and disposable PostgreSQL jobs"
+    },
+    "account_disable": "pending CI"
   }
 }

@@ -3,7 +3,7 @@ import argparse
 import re
 from sqlalchemy import select
 from .db import SessionLocal
-from .models import Workspace
+from .models import Audit, Workspace
 
 
 def create_workspace(db,slug,name):
@@ -19,6 +19,8 @@ def main():
     parser.add_argument('slug');parser.add_argument('name');args=parser.parse_args()
     with SessionLocal.begin() as db:
         workspace=create_workspace(db,args.slug,args.name)
-        print(f'Created workspace {workspace.slug} (id {workspace.id}).')
+        db.add(Audit(workspace_id=workspace.id,actor='local-cli',action='workspace.created',detail=workspace.slug))
+        message=f'Created workspace {workspace.slug} (id {workspace.id}).'
+    print(message)
 
 if __name__=='__main__':main()

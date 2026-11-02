@@ -12,3 +12,9 @@
 - SQLite direct-SQL tests cover invalid references, cross-workspace links, moves, protected workspace deletion, migration refusal with legacy inconsistent data and downgrade/upgrade. Local development migration was repaired after an interrupted pre-release downgrade left partially removed triggers (SQLite DDL); no cached advisories were lost. Downgrade now tolerates interrupted trigger removal.
 - Latest local result: 58 backend passed, 3 PostgreSQL tests skipped; 11 frontend tests passed; Vite build, Alembic check, pip check and npm audit passed. Three.js chunk warning remains.
 - Prior baseline commit `e0a798c` passed GitHub Actions backend, frontend and disposable PostgreSQL jobs: https://github.com/oldman-552/cicc/actions/runs/41431454188. The new guard migration and new direct-SQL PostgreSQL test still require a successful new CI run.
+
+### Identity operations and CI
+
+- GitHub Actions run 41431887352 for commit `035e26f` passed backend, frontend and disposable PostgreSQL, including the new direct-SQL workspace guards: https://github.com/oldman-552/cicc/actions/runs/41431887352. This is not full concurrency/security certification.
+- Added trusted-local account disabling with atomic session revocation and mutable workspace audit records for CLI account configuration, disabling and workspace creation. The actor `local-cli` is an unverified label and direct database changes bypass this audit. Re-enabling requires configuring a new password.
+- New tests verify session invalidation, cross-workspace refusal, no password in audit/CLI output, transactional rollback and CLI behavior. Local suite: 63 passed, 4 PostgreSQL-only skipped. Added a PostgreSQL test; a new CI run is required.

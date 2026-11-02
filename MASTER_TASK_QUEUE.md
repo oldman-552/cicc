@@ -4,8 +4,9 @@ This is a prioritized working queue, not evidence that the complete RCTFC v4.1 s
 
 ## Active
 
-1. Strengthen development workspace boundaries with database-side safeguards for scoped relationships and test migration/rollback and direct-SQL bypass scenarios. Preserve existing data; do not claim production isolation without comprehensive review and RLS.
-2. Validate PostgreSQL and migration behavior in an actual disposable service/CI; monitor results if GitHub Actions are available.
+1. Validate the local account disable/audit revision in disposable PostgreSQL CI and fix any failures.
+2. Extend identity security toward MFA with secure key management, replay protection, rate limiting, recovery and tests; do not weaken existing authentication or expose secrets.
+3. Continue adversarial workspace/concurrency testing; selected direct-SQL guards passed SQLite and disposable PostgreSQL CI, but production isolation and RLS remain absent.
 
 ## Pending — ordered by dependency, not approval gates
 

@@ -25,7 +25,7 @@ npm ci
 npm run dev
 ```
 
-Open the Vite URL. Its server proxies `/api` to the backend; browser code does not call localhost directly. API docs are at `http://127.0.0.1:8000/docs`. Roles are `admin`, `analyst` and `viewer`; creating or resetting an account uses the interactive command and revokes its sessions. Authentication is required by default. Session cookies are Secure and SameSite=Strict; use HTTPS or a browser's localhost secure-context exception. `CICC_INSECURE_COOKIES=1` is for isolated HTTP development only.
+Open the Vite URL. Its server proxies `/api` to the backend; browser code does not call localhost directly. API docs are at `http://127.0.0.1:8000/docs`. Roles are `admin`, `analyst` and `viewer`; creating or resetting an account uses the interactive command and revokes its sessions. Disable an account and revoke its sessions with `python -m backend.app.accounts USER --workspace SLUG --disable`. Local CLI account and workspace changes produce mutable audit records labeled `local-cli`, which does not identify or authenticate the operating-system operator. Authentication is required by default. Session cookies are Secure and SameSite=Strict; use HTTPS or a browser's localhost secure-context exception. `CICC_INSECURE_COOKIES=1` is for isolated HTTP development only.
 
 For a **disposable, non-sensitive preview only**, `CICC_DEMO_MODE=1` grants unauthenticated full access. The Arena live preview runs in this mode and is explicitly labelled. Never use it with sensitive data.
 
