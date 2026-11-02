@@ -213,3 +213,30 @@ def test_postgres_revoke_other_sessions_only(monkeypatch):
         assert a.get('/api/auth/session').status_code==200
         assert b.get('/api/auth/session').status_code==401
         assert c.get('/api/auth/session').status_code==200
+
+
+def test_postgres_offline_totp_key_rotation(monkeypatch):
+    import base64
+    import pyotp
+    from sqlalchemy import select
+    from backend.app import accounts,mfa,security
+    from backend.app.db import SessionLocal
+    from backend.app.models import Session,UserMfa
+    from backend.app.workspaces import create_workspace
+    monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    old=b't'*32;new=b'n'*32;monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(old).decode())
+    suffix=uuid4().hex[:16];username='rotate'+suffix;password='synthetic-password-123456';secret='JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'
+    real=mfa.match_counter;clock=[6000];monkeypatch.setattr(mfa,'match_counter',lambda s,c:real(s,c,now=clock[0]))
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'rotate-'+suffix,'Rotation test')
+        user=accounts.configure_account(db,username,password,'admin',workspace.id)
+        mfa.enroll(db,user,secret,pyotp.TOTP(secret).generate_otp(200));user_id=user.id
+        security.create_session(db,user_id,mfa_verified=True)
+    with SessionLocal.begin() as db:assert mfa.rotate_key(db,old,new)>=1
+    with SessionLocal() as db:
+        record=db.get(UserMfa,user_id)
+        assert mfa.decrypt_secret(user_id,record.encrypted_secret,new)==secret
+        assert not db.scalars(select(Session).where(Session.user_id==user_id)).all()
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(new).decode());clock[0]=6030
+    with TestClient(main.app,base_url='https://testserver') as client:
+        assert client.post('/api/auth/login',json={'username':username,'password':password,'otp':pyotp.TOTP(secret).generate_otp(201)}).status_code==200

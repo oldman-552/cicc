@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate limited readiness endpoint in disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor GitHub Actions for the readiness commit and fix failures; then continue secure key lifecycle, phishing-resistant identity and workspace concurrency testing.",
+  "active_task": "Validate offline MFA key rotation in disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor GitHub Actions for the offline key rotation commit and fix any failure; then continue phishing-resistant identity, verified recovery and workspace concurrency tests.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -17,11 +17,12 @@
     "Optional local TOTP with encrypted seeds, replay rejection, trusted CLI enrollment/recovery, and translated login",
     "Optional deployment-wide TOTP enforcement and session MFA assurance (local tests passed)",
     "Authenticated user self-service revocation of other sessions and localized TOTP status",
-    "Limited database, identity schema and MFA key readiness probe"
+    "Limited database, identity schema and MFA key readiness probe",
+    "Offline global TOTP key rotation with transactional rollback and session revocation"
   ],
   "last_local_tests": {
-    "backend_passed": 78,
-    "backend_skipped_postgresql": 7,
+    "backend_passed": 82,
+    "backend_skipped_postgresql": 8,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -33,7 +34,7 @@
     "No live FIRST EPSS access due to outbound host policy",
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
-    "No local Docker or PostgreSQL; readiness revision requires CI validation"
+    "No local Docker or PostgreSQL; offline key rotation revision requires CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -65,6 +66,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41433664301",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "readiness": "pending CI"
+    "readiness": {
+      "commit": "c50728f8b4becc263b6d634c7da81141f06f4e3d",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41433984885",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "mfa_key_rotation": "pending CI"
   }
 }

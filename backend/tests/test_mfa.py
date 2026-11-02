@@ -164,3 +164,88 @@ def test_invalid_mfa_policy_fails_startup(tmp_path):
     environment={**os.environ,'CICC_REQUIRE_MFA':'true','DATABASE_URL':f'sqlite:///{tmp_path}/invalid.db'}
     result=subprocess.run([sys.executable,'-c','import backend.app.main'],env=environment,capture_output=True,text=True)
     assert result.returncode!=0 and 'CICC_REQUIRE_MFA must be 0 or 1' in result.stderr
+
+
+def test_offline_key_rotation_is_atomic_and_revokes_sessions(env,monkeypatch):
+    from backend.app import security
+    from backend.app.models import Workspace
+    _,factory=env
+    old=b'a'*32;new=b'b'*32;monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(old).decode())
+    real=mfa.match_counter;monkeypatch.setattr(mfa,'match_counter',lambda secret,code:real(secret,code,now=3000))
+    with factory.begin() as db:
+        db.add(Workspace(id=2,slug='other',name='Other',active=True));db.flush()
+        for name,workspace in (('first',1),('second',2)):
+            user=accounts.configure_account(db,name,PASSWORD,'analyst',workspace)
+            mfa.enroll(db,user,SECRET,pyotp.TOTP(SECRET).generate_otp(100))
+            security.create_session(db,user.id,mfa_verified=True)
+    with factory() as db:before={x.user_id:x.encrypted_secret for x in db.scalars(select(UserMfa)).all()}
+    with factory.begin() as db:assert mfa.rotate_key(db,old,new)==2
+    with factory() as db:
+        records=db.scalars(select(UserMfa)).all()
+        assert all(x.encrypted_secret!=before[x.user_id] and mfa.decrypt_secret(x.user_id,x.encrypted_secret,new)==SECRET for x in records)
+        assert not db.scalars(select(Session)).all()
+        audits=db.scalars(select(Audit).where(Audit.action=='account.mfa_key_rotated')).all()
+        assert {x.workspace_id for x in audits}=={1,2}
+        assert all(SECRET not in x.detail for x in audits)
+    with pytest.raises(ValueError,match='different'):
+        with factory.begin() as db:mfa.rotate_key(db,new,new)
+
+
+def test_offline_rotation_failure_leaves_all_seeds_and_sessions_unchanged(env,monkeypatch):
+    from backend.app import security
+    _,factory=env
+    old=b'a'*32;new=b'b'*32;monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(old).decode())
+    real=mfa.match_counter;monkeypatch.setattr(mfa,'match_counter',lambda secret,code:real(secret,code,now=3000))
+    with factory.begin() as db:
+        for name in ('first','second'):
+            user=accounts.configure_account(db,name,PASSWORD,'analyst',1)
+            mfa.enroll(db,user,SECRET,pyotp.TOTP(SECRET).generate_otp(100))
+            security.create_session(db,user.id,mfa_verified=True)
+    with factory.begin() as db:
+        records=db.scalars(select(UserMfa).order_by(UserMfa.user_id)).all()
+        records[-1].encrypted_secret=b'corrupted'
+    with factory() as db:
+        before={x.user_id:x.encrypted_secret for x in db.scalars(select(UserMfa)).all()}
+        session_count=len(db.scalars(select(Session)).all())
+    with pytest.raises(mfa.MfaUnavailable):
+        with factory.begin() as db:mfa.rotate_key(db,old,new)
+    with factory() as db:
+        assert {x.user_id:x.encrypted_secret for x in db.scalars(select(UserMfa)).all()}==before
+        assert len(db.scalars(select(Session)).all())==session_count
+        assert not db.scalar(select(Audit).where(Audit.action=='account.mfa_key_rotated'))
+
+
+def test_key_rotation_cli_requires_offline_acknowledgment_and_is_global(env,monkeypatch,capsys):
+    _,factory=env
+    old=b'a'*32;new=b'b'*32
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(old).decode())
+    monkeypatch.setenv('CICC_MFA_NEW_KEY',base64.urlsafe_b64encode(new).decode())
+    monkeypatch.setattr(mfa,'SessionLocal',factory)
+    monkeypatch.setattr('sys.argv',['mfa','rotate-key'])
+    with pytest.raises(SystemExit):mfa.main()
+    monkeypatch.setattr('sys.argv',['mfa','rotate-key','--confirm-offline-rotation','--workspace','other'])
+    with pytest.raises(SystemExit):mfa.main()
+    monkeypatch.setattr('sys.argv',['mfa','rotate-key','--confirm-offline-rotation'])
+    mfa.main();output=capsys.readouterr().out
+    assert 'Rotated 0 enrolled accounts' in output
+    assert base64.urlsafe_b64encode(old).decode() not in output and base64.urlsafe_b64encode(new).decode() not in output
+
+
+def test_offline_rotation_rolls_back_after_changes(env,monkeypatch):
+    from backend.app import security
+    _,factory=env;old=b'a'*32;new=b'b'*32
+    monkeypatch.setenv('CICC_MFA_KEY',base64.urlsafe_b64encode(old).decode())
+    real=mfa.match_counter;monkeypatch.setattr(mfa,'match_counter',lambda secret,code:real(secret,code,now=3000))
+    with factory.begin() as db:
+        user=accounts.configure_account(db,'first',PASSWORD,'analyst',1)
+        mfa.enroll(db,user,SECRET,pyotp.TOTP(SECRET).generate_otp(100))
+        security.create_session(db,user.id,mfa_verified=True);user_id=user.id
+    with factory() as db:before=db.get(UserMfa,user_id).encrypted_secret
+    with pytest.raises(RuntimeError):
+        with factory.begin() as db:
+            assert mfa.rotate_key(db,old,new)==1
+            raise RuntimeError('simulate failure after updates')
+    with factory() as db:
+        assert db.get(UserMfa,user_id).encrypted_secret==before
+        assert len(db.scalars(select(Session).where(Session.user_id==user_id)).all())==1
+        assert not db.scalar(select(Audit).where(Audit.action=='account.mfa_key_rotated'))

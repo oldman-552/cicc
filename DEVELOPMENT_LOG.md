@@ -42,3 +42,9 @@
 - Session-management commit `a681b20` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41433664301.
 - Added public liveness-independent `/api/ready` with database/limited identity-schema checks and, when relevant, validation of the MFA key against one enrolled seed. Failures return only a generic 503. The proposed Compose health check now uses it; Docker remains untested. This probe is not comprehensive migration, security or deployment readiness certification.
 - Local results: 78 backend passed, 7 PostgreSQL-only skipped; frontend tests/build, schema check, pip check and npm audit remain passed. A PostgreSQL readiness check is included in the next CI run.
+
+### Offline MFA key rotation
+
+- Readiness commit `c50728f` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41433984885.
+- Added global, offline-only MFA seed key rotation with operator downtime acknowledgment, bounded enrollment count, validation before mutation, one database transaction, per-workspace mutable audit counts and session revocation. The tool cannot verify downtime, distribute secrets, or resolve an uncertain commit automatically. No production recovery/rotation drill is claimed.
+- Tests cover multi-workspace rotation, failed decryption, transaction rollback, no key in output and CLI scope validation. Local result: 82 backend passed, 8 PostgreSQL skipped; 12 frontend tests, build, schema check, pip check and npm audit passed. A PostgreSQL rotation test is pending CI.
