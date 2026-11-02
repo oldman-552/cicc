@@ -716,3 +716,37 @@ def test_postgres_older_source_refresh_cannot_overwrite_newer(monkeypatch,old_fa
         assert (db.get(Advisory,new) is None)==new_fails
         source=db.get(Source,'github')
         assert source and (source.error=='new failure' if new_fails else source.error is None)
+
+
+def test_postgres_source_sequence_survives_application_clock_regression(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from datetime import datetime,timezone
+    from threading import Event
+    from backend.app.db import SessionLocal
+    from backend.app.models import Advisory,Source
+    monkeypatch.setattr(main,'DEMO',True)
+    suffix=uuid4().hex[:16];old='clockold-'+suffix;new='clocknew-'+suffix
+    entered,release=Event(),Event();calls=[];clock=[datetime(2030,1,1,tzinfo=timezone.utc)]
+    monkeypatch.setattr(main,'utcnow',lambda:clock[0])
+    def collect():
+        calls.append(1)
+        if len(calls)==1:
+            entered.set()
+            if not release.wait(10):raise RuntimeError('test timeout')
+            id=old
+        else:id=new
+        return [{'id':id,'cve':'CVE-2025-1234','summary':'Synthetic','severity':'high','url':'https://github.com/advisories/'+id,'published_at':'2025-01-01','raw':{}}]
+    monkeypatch.setattr(main.sources,'github_advisories',collect)
+    def refresh():
+        with TestClient(main.app,base_url='https://testserver') as client:return client.post('/api/sources/github/refresh')
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first=pool.submit(refresh)
+        try:
+            assert entered.wait(10)
+            clock[0]=datetime(2020,1,1,tzinfo=timezone.utc)
+            second=pool.submit(refresh);assert second.result(timeout=15).status_code==200
+        finally:release.set()
+        assert first.result(timeout=15).status_code==409
+    with SessionLocal() as db:
+        assert db.get(Advisory,old) is None and db.get(Advisory,new) is not None
+        source=db.get(Source,'github');assert source.attempt_sequence==source.completed_sequence

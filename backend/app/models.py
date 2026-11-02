@@ -55,6 +55,8 @@ class Source(Base):
     version: Mapped[str|None] = mapped_column(String(100))
     released_at: Mapped[str|None] = mapped_column(String(100))
     reference: Mapped[str|None] = mapped_column(String(128))
+    attempt_sequence: Mapped[int] = mapped_column(BigInteger,default=0,server_default='0')
+    completed_sequence: Mapped[int] = mapped_column(BigInteger,default=0,server_default='0')
 
 class Advisory(Base):
     __tablename__='advisories'

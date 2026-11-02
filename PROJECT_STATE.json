@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate overlapping source refresh publication on disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor CI for source refresh ordering, repair failures, then continue tenant isolation and PostgreSQL recovery.",
+  "active_task": "Validate database-issued source sequences and clock-regression tests on disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor CI for source attempt sequence migration and clock-regression tests, fix failures, then continue isolation and PostgreSQL recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -27,11 +27,12 @@
     "SQLite-tested database role guard with preflight and downgrade refusal",
     "SQLite-tested security-state session revocation and session/MFA parent immutability triggers",
     "Explicit opt-in global source operators with localized capability display and default-deny policy",
-    "Source refresh publication prevents older attempts overriding later completed results on SQLite-tested paths"
+    "Source refresh publication prevents older attempts overriding later completed results on SQLite-tested paths",
+    "SQLite-tested database-issued source attempt ordering, independent of application clocks"
   ],
   "last_local_tests": {
-    "backend_passed": 125,
-    "backend_skipped_postgresql": 25,
+    "backend_passed": 127,
+    "backend_skipped_postgresql": 26,
     "frontend_simulated_dom_passed": 13,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -45,7 +46,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Source refresh race tests require PostgreSQL CI; application wall clock skew, global caches, unaudited direct SQL and SQLite concurrency remain concerns"
+    "Source attempt sequence migration and clock regression test require PostgreSQL CI; SQLite concurrency and distributed scheduling remain uncertified"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -152,6 +153,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41439176996",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "source_publication_races": "pending CI"
+    "source_publication_races": {
+      "commit": "70fe13e009f0396ebf39ffe97b2753bb74cd67fe",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41439546375",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "source_attempt_sequences": "pending CI"
   }
 }

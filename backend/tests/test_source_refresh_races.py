@@ -42,3 +42,31 @@ def test_older_refresh_cannot_overwrite_newer_result(env,monkeypatch,old_fails,n
         source=db.get(Source,'github')
         assert source and (source.error=='new failure' if new_fails else source.error is None)
         assert db.scalar(select(Audit).where(Audit.action=='source.refresh_superseded'))
+
+
+def test_source_ordering_survives_application_clock_regression(env,monkeypatch):
+    from datetime import datetime,timezone
+    _,factory=env;entered,release=Event(),Event();calls=[]
+    clock=[datetime(2030,1,1,tzinfo=timezone.utc)]
+    monkeypatch.setattr(main,'utcnow',lambda:clock[0])
+    def collect():
+        calls.append(1)
+        if len(calls)==1:
+            entered.set()
+            if not release.wait(10):raise RuntimeError('test timeout')
+            return [row('old-clock')]
+        return [row('new-clock')]
+    monkeypatch.setattr(main.sources,'github_advisories',collect)
+    def refresh():
+        with TestClient(main.app,base_url='https://testserver') as client:return client.post('/api/sources/github/refresh')
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first=pool.submit(refresh)
+        try:
+            assert entered.wait(10)
+            clock[0]=datetime(2020,1,1,tzinfo=timezone.utc)
+            second=pool.submit(refresh);assert second.result(timeout=15).status_code==200
+        finally:release.set()
+        assert first.result(timeout=15).status_code==409
+    with factory() as db:
+        assert db.get(Advisory,'old-clock') is None and db.get(Advisory,'new-clock') is not None
+        source=db.get(Source,'github');assert source.attempt_sequence==2 and source.completed_sequence==2

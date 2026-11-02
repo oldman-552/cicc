@@ -4,7 +4,7 @@ This is a prioritized working queue, not evidence that the complete RCTFC v4.1 s
 
 ## Active
 
-1. Validate overlapping source refresh publication on disposable PostgreSQL CI; repair failures.
+1. Validate database-issued source attempt sequences and clock-regression tests in disposable PostgreSQL CI; repair failures.
 2. Extend identity security with phishing-resistant authenticators, production key management, verified recovery and distributed throttling; local TOTP and its optional deployment-wide policy are not enterprise MFA.
 3. Continue adversarial workspace/concurrency testing, including workspace lifecycle; direct database state edits remain unaudited and privileged actors can bypass safeguards; selected direct-SQL guards passed SQLite and disposable PostgreSQL CI, but production isolation and RLS remain absent.
 

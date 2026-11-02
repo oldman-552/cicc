@@ -234,15 +234,20 @@ def revoke_other_sessions(request:Request,db:DbSession=Depends(get_db)):
 def list_sources(db:DbSession=Depends(get_db)):
     return [source_dict(k,db.get(Source,k)) for k in ('github','cisa','mitre','attack','epss')]
 
-def lock_source_record(db,source_id):
-    # Atomic creation avoids concurrent first-refresh insert races. PostgreSQL
-    # row locks serialize publication; SQLite has only database-level locking.
+def reserve_source_attempt(db,source_id):
+    # One short transaction reserves a monotonic per-source ticket before I/O.
     db.execute(text('INSERT INTO sources(id,count) VALUES (:id,0) ON CONFLICT (id) DO NOTHING'),{'id':source_id})
+    sequence=db.execute(text('UPDATE sources SET attempt_sequence=attempt_sequence+1 WHERE id=:id RETURNING attempt_sequence'),{'id':source_id}).scalar_one()
+    db.commit()
+    return sequence
+
+
+def lock_source_record(db,source_id):
     return db.scalar(select(Source).where(Source.id==source_id).with_for_update())
 
 
-def source_attempt_superseded(source,attempted):
-    return source.last_attempt is not None and as_utc(source.last_attempt)>=attempted
+def source_attempt_superseded(source,sequence):
+    return source is None or source.completed_sequence>=sequence
 
 
 def superseded_refresh(db,request,source_id):
@@ -253,7 +258,7 @@ def superseded_refresh(db,request,source_id):
 @app.post('/api/sources/{source_id}/refresh')
 def refresh_source(source_id:str,request:Request,db:DbSession=Depends(get_db)):
     if source_id not in ('github','cisa','mitre','attack','epss'): raise HTTPException(404,'Source not found')
-    attempted=utcnow()
+    attempted=utcnow(); sequence=reserve_source_attempt(db,source_id)
     try:
         if source_id=='github': data=sources.github_advisories()
         elif source_id=='cisa': data=sources.cisa_kev()
@@ -268,7 +273,7 @@ def refresh_source(source_id:str,request:Request,db:DbSession=Depends(get_db)):
             if not identifiers: raise ValueError('Collect GitHub advisories with CVE identifiers first')
             data=sources.epss_scores(identifiers) if source_id=='epss' else [sources.mitre_cve(cve) for cve in identifiers]
         timestamp=utcnow(); source=lock_source_record(db,source_id)
-        if source_attempt_superseded(source,attempted):return superseded_refresh(db,request,source_id)
+        if source_attempt_superseded(source,sequence):return superseded_refresh(db,request,source_id)
         if source_id=='github':
             for item in data:
                 row=db.get(Advisory,item['id']) or Advisory(id=item['id'])
@@ -292,13 +297,13 @@ def refresh_source(source_id:str,request:Request,db:DbSession=Depends(get_db)):
                 for key,value in item.items(): setattr(row,key,value)
                 row.collected_at=timestamp;db.add(row)
             db.flush();count=db.scalar(select(func.count()).select_from(AttackTechnique))
-        source.last_success=timestamp; source.last_attempt=attempted; source.error=None; source.count=count
+        source.last_success=timestamp; source.last_attempt=attempted; source.error=None; source.count=count;source.completed_sequence=sequence
         write_audit(db,request,'source.refresh',f'{source_id}: {count}'); db.commit()
         return {'imported':len(data) if source_id in ('mitre','attack') else count,'collected_at':timestamp}
     except (httpx.HTTPError,ValueError,TypeError,IntegrityError) as exc:
         db.rollback(); source=lock_source_record(db,source_id)
-        if source_attempt_superseded(source,attempted):return superseded_refresh(db,request,source_id)
-        source.last_attempt=attempted; source.error='Database integrity error' if isinstance(exc,IntegrityError) else str(exc)[:300]; write_audit(db,request,'source.refresh_failed',source_id); db.commit()
+        if source_attempt_superseded(source,sequence):return superseded_refresh(db,request,source_id)
+        source.last_attempt=attempted;source.completed_sequence=sequence; source.error='Database integrity error' if isinstance(exc,IntegrityError) else str(exc)[:300]; write_audit(db,request,'source.refresh_failed',source_id); db.commit()
         raise HTTPException(502,'Collection failed; cached data was retained') from exc
 
 @app.get('/api/advisories')

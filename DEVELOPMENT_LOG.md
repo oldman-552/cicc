@@ -134,3 +134,9 @@
 - Global source operator policy commit `c9a441e` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41439176996. Caches remain globally shared; this is not production tenant isolation.
 - Fixed stale source refresh publication: source-row creation is conflict-safe, PostgreSQL publication locks the source row, and older attempts return 409 without overriding a later completed result or error. Ordering uses application wall clocks; distributed clock skew and SQLite concurrency remain limitations.
 - Synthetic SQLite tests cover older success/failure against newer success/failure. Equivalent PostgreSQL races await CI. Local backend 125 passed/25 PostgreSQL skipped; frontend 13 passed, build, Alembic/pip checks and npm audit passed.
+
+### Database-issued source attempt ordering
+
+- Source refresh race commit `70fe13e` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41439546375.
+- Replaced wall-clock ordering with per-source monotonic database-issued tickets reserved in a short transaction before collection. Later completed tickets supersede older attempts even when application clocks regress. Displayed timestamps still use application clocks, and crashes can leave gaps. Migration `2ecb93a547b1` preserves existing source rows with zero counters and refuses downgrade while source rows exist; SQLite version must support UPDATE RETURNING. Applied to the local development database.
+- SQLite synthetic tests cover clock regression, migration preservation and downgrade refusal; PostgreSQL equivalent awaits CI. Local backend 127 passed/26 PostgreSQL skipped; 13 frontend tests, build, Alembic/pip checks and npm audit passed.

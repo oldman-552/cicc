@@ -30,4 +30,4 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Global source cache writes are disabled by default outside demo and require both admin role and an explicit configured operator username. Caches remain shared and no enterprise operator governance or RLS is provided; PostgreSQL verification passed in disposable CI.
 
-- Source publication serializes through a source record and rejects attempts superseded by a later completed attempt; fetches can overlap and ordering depends on application wall clocks. PostgreSQL concurrency tests pending CI.
+- Source publication serializes through a source record and rejects attempts superseded by a later completed attempt; fetches can overlap and database-issued sequences determine ordering, independent of application clocks. PostgreSQL sequence tests pending CI; displayed timestamps still rely on clocks.
