@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate PostgreSQL asset mutation versus link creation races in CI.",
-  "next_exact_action": "Monitor CI for the asset link/mutation locking change, fix failures, then continue tenant isolation and PostgreSQL recovery.",
+  "active_task": "Validate global source operator policy on disposable PostgreSQL and frontend CI.",
+  "next_exact_action": "Monitor CI for global source operator policy, fix failures, then continue tenant isolation and PostgreSQL recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -25,12 +25,13 @@
     "Experimental authenticated encrypted SQLite backups with external key, protected plaintext staging and session-invalidating restore",
     "Fail-closed login and session authorization for unexpected database roles",
     "SQLite-tested database role guard with preflight and downgrade refusal",
-    "SQLite-tested security-state session revocation and session/MFA parent immutability triggers"
+    "SQLite-tested security-state session revocation and session/MFA parent immutability triggers",
+    "Explicit opt-in global source operators with localized capability display and default-deny policy"
   ],
   "last_local_tests": {
-    "backend_passed": 120,
-    "backend_skipped_postgresql": 21,
-    "frontend_simulated_dom_passed": 12,
+    "backend_passed": 122,
+    "backend_skipped_postgresql": 22,
+    "frontend_simulated_dom_passed": 13,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
     "pip_check": "passed",
@@ -43,7 +44,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Asset mutation/link PostgreSQL race tests require CI; direct SQL remains unaudited and SQLite concurrency uncertified"
+    "Global source operator policy needs PostgreSQL CI validation; global caches remain shared, direct SQL unaudited, SQLite concurrency uncertified"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -140,6 +141,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41438417897",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "asset_mutation_link_races": "pending CI"
+    "asset_mutation_link_races": {
+      "commit": "5ae07e07ac248936e05ef826fc0029e7f76c54a3",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41438744913",
+      "result": "passed backend, frontend and disposable PostgreSQL asset races"
+    },
+    "global_source_operators": "pending CI"
   }
 }

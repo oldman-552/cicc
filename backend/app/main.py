@@ -49,6 +49,20 @@ if _require_mfa not in ('0','1'): raise RuntimeError('CICC_REQUIRE_MFA must be 0
 REQUIRE_MFA=_require_mfa=='1'
 COOKIE_SECURE=os.getenv('CICC_INSECURE_COOKIES','0')!='1'
 
+def parse_source_operators(value):
+    if not value:return frozenset()
+    if len(value)>4096:raise RuntimeError('CICC_GLOBAL_SOURCE_OPERATORS is too long')
+    try:
+        names=value.split(',')
+        if len(names)>100 or any(not name.strip() for name in names):raise ValueError()
+        return frozenset(security.username_normalize(name) for name in names)
+    except ValueError as exc:raise RuntimeError('Invalid CICC_GLOBAL_SOURCE_OPERATORS') from exc
+
+SOURCE_OPERATORS=parse_source_operators(os.getenv('CICC_GLOBAL_SOURCE_OPERATORS',''))
+
+def can_refresh_sources(user):
+    return user.role=='admin' and user.username in SOURCE_OPERATORS
+
 def as_utc(value):
     return value.replace(tzinfo=timezone.utc) if value is not None and value.tzinfo is None else value
 
@@ -98,7 +112,8 @@ async def access_control(request:Request,call_next):
             if request.method not in ('GET','HEAD','OPTIONS'):
                 csrf=request.headers.get('X-CSRF-Token','')
                 if not csrf or len(csrf)>256 or not hmac.compare_digest(session.csrf_hash,security.digest(csrf)): return JSONResponse({'detail':'Invalid CSRF token'},status_code=403,headers={'Cache-Control':'no-store'})
-                if path not in ('/api/auth/logout','/api/auth/sessions/revoke-others') and (user.role=='viewer' or (path.startswith('/api/sources/') and user.role!='admin')): return JSONResponse({'detail':'Insufficient permission'},status_code=403,headers={'Cache-Control':'no-store'})
+                if path not in ('/api/auth/logout','/api/auth/sessions/revoke-others') and user.role=='viewer': return JSONResponse({'detail':'Insufficient permission'},status_code=403,headers={'Cache-Control':'no-store'})
+                if path.startswith('/api/sources/') and not can_refresh_sources(user): return JSONResponse({'detail':'Global source operator permission required'},status_code=403,headers={'Cache-Control':'no-store'})
             if (path=='/api/audit' or path.startswith('/api/audit/')) and user.role!='admin': return JSONResponse({'detail':'Insufficient permission'},status_code=403,headers={'Cache-Control':'no-store'})
     response=await call_next(request)
     if path.startswith('/api/'):
@@ -158,12 +173,12 @@ def ready():
 
 @app.get('/api/auth/session')
 def current_session(request:Request):
-    if DEMO: return {'mode':'demo','role':'admin','authenticated':False,'workspace':{'slug':'default','name':'Default development workspace'}}
+    if DEMO: return {'mode':'demo','role':'admin','authenticated':False,'can_refresh_global_sources':True,'workspace':{'slug':'default','name':'Default development workspace'}}
     with SessionLocal() as db:
         row=security.get_session(db,request.cookies.get('cicc_session',''),require_mfa=REQUIRE_MFA)
         if not row: raise HTTPException(401,'Authentication required')
         workspace=db.get(Workspace,row.User.workspace_id)
-        return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'mfa_enabled':db.get(UserMfa,row.User.id) is not None,'mfa_required':REQUIRE_MFA,'workspace':{'slug':workspace.slug,'name':workspace.name}}
+        return {'mode':'authenticated','role':row.User.role,'username':row.User.username,'authenticated':True,'mfa_enabled':db.get(UserMfa,row.User.id) is not None,'mfa_required':REQUIRE_MFA,'can_refresh_global_sources':can_refresh_sources(row.User),'workspace':{'slug':workspace.slug,'name':workspace.name}}
 
 @app.post('/api/auth/login')
 def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(get_db)):
@@ -196,7 +211,7 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     response.set_cookie('cicc_session',token,secure=COOKIE_SECURE,httponly=True,samesite='strict',path='/',max_age=43200)
     response.set_cookie('cicc_csrf',csrf,secure=COOKIE_SECURE,httponly=False,samesite='strict',path='/',max_age=43200)
     workspace=db.get(Workspace,user.workspace_id)
-    return {'mode':'authenticated','role':user.role,'username':user.username,'authenticated':True,'mfa_enabled':record is not None,'mfa_required':REQUIRE_MFA,'workspace':{'slug':workspace.slug,'name':workspace.name}}
+    return {'mode':'authenticated','role':user.role,'username':user.username,'authenticated':True,'mfa_enabled':record is not None,'mfa_required':REQUIRE_MFA,'can_refresh_global_sources':can_refresh_sources(user),'workspace':{'slug':workspace.slug,'name':workspace.name}}
 
 @app.post('/api/auth/logout')
 def logout(request:Request,response:Response,db:DbSession=Depends(get_db)):

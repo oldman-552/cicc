@@ -660,3 +660,21 @@ def test_postgres_asset_link_and_mutation_serialize(monkeypatch,link_kind,mutati
         assert current['identifier']==(new if first=='mutation' and mutation=='metadata' else old)
         assert current['status']==('retired' if mutation=='retire' else 'active')
         monkeypatch.setattr(main,'scoped',original_scoped)
+
+
+def test_postgres_global_source_refresh_requires_explicit_operator(monkeypatch):
+    from backend.app import accounts,workspaces
+    from backend.app.db import SessionLocal
+    monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    suffix=uuid4().hex[:16];operator='op'+suffix;tenant='tenant'+suffix;password='synthetic-password-123456'
+    monkeypatch.setattr(main,'SOURCE_OPERATORS',frozenset({operator}))
+    monkeypatch.setattr(main.sources,'github_advisories',lambda:[{'id':'GHSA-test-test-test','cve':'CVE-2025-1234','summary':'Synthetic','severity':'high','url':'https://github.com/advisories/GHSA-test-test-test','published_at':'2025-01-01','raw':{}}])
+    with SessionLocal.begin() as db:
+        a=workspaces.create_workspace(db,'source-a-'+suffix,'Source A');b=workspaces.create_workspace(db,'source-b-'+suffix,'Source B')
+        accounts.configure_account(db,operator,password,'admin',a.id);accounts.configure_account(db,tenant,password,'admin',b.id)
+    with TestClient(main.app,base_url='https://testserver') as a,TestClient(main.app,base_url='https://testserver') as b:
+        for client,name,expected in ((a,operator,True),(b,tenant,False)):
+            r=client.post('/api/auth/login',json={'username':name,'password':password});assert r.status_code==200 and r.json()['can_refresh_global_sources']==expected
+        assert b.post('/api/sources/github/refresh',headers={'X-CSRF-Token':b.cookies.get('cicc_csrf')}).status_code==403
+        assert a.post('/api/sources/github/refresh',headers={'X-CSRF-Token':a.cookies.get('cicc_csrf')}).status_code==200
+        assert b.get('/api/advisories').json()['total']==1

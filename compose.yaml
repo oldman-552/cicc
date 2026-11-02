@@ -23,6 +23,7 @@ services:
       CICC_INSECURE_COOKIES: ${CICC_INSECURE_COOKIES:-0}
       CICC_MFA_KEY: ${CICC_MFA_KEY:-}
       CICC_REQUIRE_MFA: ${CICC_REQUIRE_MFA:-0}
+      CICC_GLOBAL_SOURCE_OPERATORS: ${CICC_GLOBAL_SOURCE_OPERATORS:-}
     depends_on:
       db:
         condition: service_healthy

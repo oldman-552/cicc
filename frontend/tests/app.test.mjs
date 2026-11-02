@@ -392,3 +392,31 @@ test('login sends optional authenticator code and clears it after a failed attem
   assert.ok(ui.getByLabelText('رمز المصادقة (إن كان مفعّلاً)'));
  }finally{cleanup()}
 });
+
+test('global source refresh is disabled without explicit operator capability',async()=>{
+ for(const permitted of [false,true]){
+  localStorage.clear();
+  globalThis.fetch=async(url)=>{
+   if(url==='/api/auth/session')return json(200,{mode:'authenticated',role:'admin',username:'tester',authenticated:true,can_refresh_global_sources:permitted,workspace:{slug:'a',name:'Test'}});
+   if(url==='/api/sources')return json(200,[{id:'github',name:'GitHub Security Advisories',url:'https://github.com/advisories',status:'not_connected',count:0}]);
+   if(url==='/api/investigations'||url==='/api/audit')return json(200,[]);
+   if(String(url).startsWith('/api/advisories'))return json(200,emptyPage);
+   if(url==='/api/overview')return json(200,{advisories:0,kev_entries:0,open_investigations:0});
+   return json(404,{});
+  };
+  const ui=render(React.createElement(App));
+  try{
+   await waitFor(()=>assert.ok(ui.getByRole('heading',{name:'Intelligence, in focus.'})));
+   fireEvent.click(ui.getByRole('button',{name:'Source management'}));
+   const button=ui.getByRole('button',{name:'Refresh source'});
+   assert.equal(button.disabled,!permitted);
+   if(!permitted){
+    assert.equal(button.title,'Global source operator permission required');
+    fireEvent.change(ui.getByLabelText('Language'),{target:{value:'ar'}});
+    assert.equal(ui.getByRole('button',{name:'تحديث المصدر'}).title,'يتطلب صلاحية مشغّل المصادر العامة');
+    fireEvent.change(ui.getByLabelText('اللغة'),{target:{value:'fa'}});
+    assert.equal(ui.getByRole('button',{name:'به‌روزرسانی منبع'}).title,'مجوز متصدی منابع عمومی لازم است');
+   }
+  }finally{cleanup()}
+ }
+});
