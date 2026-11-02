@@ -68,3 +68,8 @@
 - Synthetic SQLite tests cover workspace-scoped revocation, reactivation and rollback. A PostgreSQL login/lifecycle race test is pending CI. Local backend: 89 passed, 10 PostgreSQL skipped; schema check and pip check passed; frontend remains 12 passed, build and npm audit passed previously.
 
 - Workspace lifecycle commit `d087fce` passed backend, frontend and disposable PostgreSQL GitHub Actions, including the selected login/deactivation race test: https://github.com/oldman-552/cicc/actions/runs/41435452428. This does not certify all concurrency cases or production isolation.
+
+### PostgreSQL scoped-link concurrency test
+
+- Added a disposable PostgreSQL test for both orderings of scoped investigation–asset link creation and asset deletion; it checks that a committed link prevents deletion and a committed deletion prevents link creation. PostgreSQL CI is required to determine the outcome; this is not comprehensive tenant isolation testing.
+- PostgreSQL-only tests are skipped locally (11 total); last complete local run had 89 backend passes.

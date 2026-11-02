@@ -345,3 +345,57 @@ def test_postgres_workspace_deactivation_serializes_with_login(monkeypatch):
     assert status==401
     with SessionLocal.begin() as db:workspaces.set_workspace_active(db,slug,True)
     with SessionLocal() as db:assert not db.scalars(select(Session).where(Session.user_id==user_id)).all()
+
+
+def test_postgres_scoped_link_insert_races_parent_delete():
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
+    from backend.app.db import SessionLocal
+    from backend.app.models import Asset,Investigation
+    from backend.app.workspaces import create_workspace
+    suffix=uuid4().hex[:16]
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'link-race-'+suffix,'Link race')
+        case=Investigation(workspace_id=workspace.id,title='Link race',status='open')
+        first=Asset(workspace_id=workspace.id,name='First',asset_type='application',identifier='first-'+suffix,owner='test',scope_basis='test',status='active',created_by='test')
+        second=Asset(workspace_id=workspace.id,name='Second',asset_type='application',identifier='second-'+suffix,owner='test',scope_basis='test',status='active',created_by='test')
+        db.add_all([case,first,second]);db.flush();case_id=case.id;first_id=first.id;second_id=second.id
+    inserted=Event();delete_started=Event();release=Event()
+    def insert_first():
+        with SessionLocal.begin() as db:
+            db.execute(text("INSERT INTO investigation_assets(investigation_id,asset_id,snapshot,linked_by,linked_at) VALUES (:case,:asset,'{}','test',NOW())"),{'case':case_id,'asset':first_id})
+            inserted.set()
+            if not release.wait(10):raise RuntimeError('test timeout')
+    def delete_first():
+        delete_started.set()
+        try:
+            with SessionLocal.begin() as db:db.execute(text('DELETE FROM assets WHERE id=:asset'),{'asset':first_id})
+        except IntegrityError:return False
+        return True
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        a=pool.submit(insert_first);assert inserted.wait(10)
+        b=pool.submit(delete_first);assert delete_started.wait(10);release.set()
+        a.result(timeout=15);deleted=b.result(timeout=15)
+    assert not deleted
+    deleted=Event();insert_started=Event();release_delete=Event()
+    def delete_second():
+        with SessionLocal.begin() as db:
+            db.execute(text('DELETE FROM assets WHERE id=:asset'),{'asset':second_id});deleted.set()
+            if not release_delete.wait(10):raise RuntimeError('test timeout')
+    def insert_second():
+        insert_started.set()
+        try:
+            with SessionLocal.begin() as db:
+                db.execute(text("INSERT INTO investigation_assets(investigation_id,asset_id,snapshot,linked_by,linked_at) VALUES (:case,:asset,'{}','test',NOW())"),{'case':case_id,'asset':second_id})
+        except IntegrityError:return False
+        return True
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        a=pool.submit(delete_second);assert deleted.wait(10)
+        b=pool.submit(insert_second);assert insert_started.wait(10);release_delete.set()
+        a.result(timeout=15);linked=b.result(timeout=15)
+    assert not linked
+    with SessionLocal() as db:
+        assert db.scalar(text('SELECT count(*) FROM investigation_assets WHERE investigation_id=:case AND asset_id=:asset'),{'case':case_id,'asset':first_id})==1
+        assert db.scalar(text('SELECT count(*) FROM investigation_assets WHERE investigation_id=:case AND asset_id=:asset'),{'case':case_id,'asset':second_id})==0

@@ -4,7 +4,7 @@ This is a prioritized working queue, not evidence that the complete RCTFC v4.1 s
 
 ## Active
 
-1. Add adversarial PostgreSQL tests for concurrent workspace-scoped link creation versus parent deletion; fix confirmed integrity failures and validate CI.
+1. Validate PostgreSQL scoped link creation versus parent deletion concurrency tests in CI; fix any confirmed failures.
 2. Extend identity security with phishing-resistant authenticators, production key management, verified recovery and distributed throttling; local TOTP and its optional deployment-wide policy are not enterprise MFA.
 3. Continue adversarial workspace/concurrency testing, including workspace lifecycle; direct database state edits bypass the supported CLI; selected direct-SQL guards passed SQLite and disposable PostgreSQL CI, but production isolation and RLS remain absent.
 
