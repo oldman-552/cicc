@@ -158,3 +158,8 @@
 
 - Import fix `9a32108` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41441134477. Selected concurrent account/client tests passed; they do not prove production abuse resistance. Diagnostic run was unsuccessful only because of the test import; its annotation preserved the failure.
 - Next: implement a strictly guarded disposable PostgreSQL restore rehearsal, invalidate restored sessions, verify with synthetic CI data and refuse active or non-disposable targets. No production recovery claim until independently tested.
+
+### Synthetic PostgreSQL recovery rehearsal
+
+- Added a CI-only synthetic custom-format pg_dump/pg_restore rehearsal against the disposable service container. It creates its own random target, checks no connections before restore (not atomic), verifies a synthetic user/session, clears restored sessions, verifies the original session remains, and drops only its own target without forced disconnection. It accepts no external archive or target name. Explicit CI flags and service container ID are required, and CI checks the rehearsal is enabled.
+- Local backend 129 passed/28 PostgreSQL skipped; Alembic and pip checks passed. First PostgreSQL execution is pending CI. This is not a production recovery tool, secure backup, key custody, freshness proof or security-state reconciliation; never use with real data.

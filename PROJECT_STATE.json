@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Implement guarded disposable PostgreSQL restore rehearsal with session invalidation and synthetic CI tests.",
-  "next_exact_action": "Implement a guarded disposable PostgreSQL restore rehearsal that refuses active/non-disposable targets, invalidates restored sessions, and verifies synthetic data in PostgreSQL CI; do not claim production DR.",
+  "active_task": "Validate CI-only synthetic PostgreSQL dump/restore rehearsal and session invalidation in disposable PostgreSQL.",
+  "next_exact_action": "Monitor disposable PostgreSQL CI for synthetic dump/restore rehearsal; read failure annotations, fix failures and rerun. Never use real data; activity precheck is non-atomic.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -33,7 +33,7 @@
   ],
   "last_local_tests": {
     "backend_passed": 129,
-    "backend_skipped_postgresql": 27,
+    "backend_skipped_postgresql": 28,
     "frontend_simulated_dom_passed": 13,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -47,7 +47,8 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Login throttling requires shared database, updated workers, synchronized clocks and trusted proxy config; not comprehensive abuse protection"
+    "Login throttling requires shared database, updated workers, synchronized clocks and trusted proxy config; not comprehensive abuse protection",
+    "Synthetic PostgreSQL recovery rehearsal pending CI; activity precheck is not atomic, no production DR, anti-rollback or security-state reconciliation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -177,6 +178,7 @@
     "login_throttle_diagnostic": {
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440996613",
       "result": "26 PostgreSQL tests passed, new test failed due to missing import; fixed and verified in subsequent CI"
-    }
+    },
+    "postgres_recovery_rehearsal": "pending CI"
   }
 }
