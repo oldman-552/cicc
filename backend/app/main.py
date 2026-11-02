@@ -57,8 +57,9 @@ def write_audit(db,actor,action,detail='',workspace_id=None):
         workspace_id=actor.state.workspace_id;actor=actor.state.actor
     db.add(Audit(actor=actor,action=action,detail=detail,workspace_id=workspace_id))
 
-def scoped(db,model,id,request):
-    return db.scalar(select(model).where(model.id==id,model.workspace_id==request.state.workspace_id))
+def scoped(db,model,id,request,lock=False):
+    query=select(model).where(model.id==id,model.workspace_id==request.state.workspace_id)
+    return db.scalar(query.with_for_update() if lock else query)
 
 def snapshot_checksum(snapshot):
     canonical=json.dumps(snapshot,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False).encode('utf-8')
@@ -351,7 +352,7 @@ def asset_detail(id:int,request:Request,db:DbSession=Depends(get_db)):
 
 @app.put('/api/assets/{id}/metadata')
 def update_asset_metadata(id:int,body:AssetBody,request:Request,db:DbSession=Depends(get_db)):
-    obj=scoped(db,Asset,id,request)
+    obj=scoped(db,Asset,id,request,lock=True)
     if not obj: raise HTTPException(404,'Asset not found')
     if obj.status!='active': raise HTTPException(409,'Only active assets can be edited')
     values=validate_asset_metadata(body)
@@ -365,7 +366,7 @@ def update_asset_metadata(id:int,body:AssetBody,request:Request,db:DbSession=Dep
 
 @app.patch('/api/assets/{id}')
 def asset_status(id:int,body:AssetStatusBody,request:Request,db:DbSession=Depends(get_db)):
-    obj=scoped(db,Asset,id,request)
+    obj=scoped(db,Asset,id,request,lock=True)
     if not obj: raise HTTPException(404,'Asset not found')
     if body.status=='active' and obj.status!='active' and not body.authorized: raise HTTPException(422,'Authorization attestation is required to reactivate')
     obj.status=body.status;obj.updated_at=utcnow();write_audit(db,request,'asset.status',f'{id}: {body.status}');db.commit()
@@ -381,7 +382,7 @@ def list_asset_sboms(id:int,request:Request,db:DbSession=Depends(get_db)):
 @app.post('/api/assets/{id}/sboms',status_code=201)
 def link_asset_sbom(id:int,body:SbomLinkBody,request:Request,db:DbSession=Depends(get_db)):
     if not body.attested: raise HTTPException(422,'Association attestation is required')
-    asset=scoped(db,Asset,id,request)
+    asset=scoped(db,Asset,id,request,lock=True)
     if not asset: raise HTTPException(404,'Asset not found')
     if asset.status!='active': raise HTTPException(409,'Only active assets can be linked')
     obj=scoped(db,Sbom,body.sbom_id,request)
@@ -428,7 +429,7 @@ def detail_investigation(id:int,request:Request,db:DbSession=Depends(get_db)):
 @app.post('/api/investigations/{id}/assets',status_code=201)
 def link_investigation_asset(id:int,body:AssetLinkBody,request:Request,db:DbSession=Depends(get_db)):
     if not scoped(db,Investigation,id,request): raise HTTPException(404,'Investigation not found')
-    asset=scoped(db,Asset,body.asset_id,request)
+    asset=scoped(db,Asset,body.asset_id,request,lock=True)
     if not asset: raise HTTPException(404,'Asset not found')
     if asset.status!='active': raise HTTPException(409,'Only active assets can be linked')
     snapshot=asset_dict(asset)

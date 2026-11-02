@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate PostgreSQL direct workspace state-change/login race test in CI.",
-  "next_exact_action": "Monitor CI for the direct workspace/login race test, fix failures, then continue isolation and PostgreSQL recovery.",
+  "active_task": "Validate PostgreSQL asset mutation versus link creation races in CI.",
+  "next_exact_action": "Monitor CI for the asset link/mutation locking change, fix failures, then continue tenant isolation and PostgreSQL recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -29,7 +29,7 @@
   ],
   "last_local_tests": {
     "backend_passed": 120,
-    "backend_skipped_postgresql": 17,
+    "backend_skipped_postgresql": 21,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -43,7 +43,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Direct workspace/login PostgreSQL race test requires CI; direct SQL remains unaudited and SQLite concurrency uncertified"
+    "Asset mutation/link PostgreSQL race tests require CI; direct SQL remains unaudited and SQLite concurrency uncertified"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -135,6 +135,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41438149536",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "direct_workspace_login_race": "pending CI"
+    "direct_workspace_login_race": {
+      "commit": "52a917e80f81dc2d8e9bf5681dbec5d8d539ffa1",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41438417897",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "asset_mutation_link_races": "pending CI"
   }
 }

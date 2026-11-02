@@ -9,3 +9,6 @@ An active asset can be linked to an investigation. The link preserves a metadata
 An active asset can also be associated with an imported SBOM after a separate user attestation. The association preserves SBOM summary and candidate count at link time. It does not establish that the inventory was deployed on that asset; candidates are not confirmed vulnerabilities. The selector shows the latest 100 SBOMs, and the association list returns up to 100 links. SBOM comparison limitations still apply; see [SBOM.md](SBOM.md).
 
 API routes: `GET/POST /api/assets`, `GET/PATCH /api/assets/{id}`, `PUT /api/assets/{id}/metadata`, `POST /api/investigations/{id}/assets`, and `GET/POST /api/assets/{id}/sboms`. Writes require CSRF protection and analyst/admin role outside demo mode. Status changes and links create local audit entries, which are not tamper-resistant.
+
+
+PostgreSQL asset metadata/status mutations and both supported link operations now lock the asset row before checking or changing it. This is intended to serialize concurrent API link creation with identity changes or retirement; selected race tests are pending PostgreSQL CI. SQLite does not provide PostgreSQL-style row locks; concurrent behavior there is not certified. These locks do not establish tenant isolation or protect against privileged direct database writes.

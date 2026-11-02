@@ -116,3 +116,9 @@
 
 - Security-state revocation migration commit `1c047d5` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41438149536. Privileged DB actions and unaudited direct changes remain outside comprehensive isolation assurance.
 - Added PostgreSQL-only coverage for login against direct SQL workspace deactivation in both transaction orderings, including reactivation without session revival; CI is required to validate it. Local baseline 120 backend passed, 17 PostgreSQL skipped.
+
+### Asset mutation/link concurrency fix
+
+- Direct workspace/login race commit `52a917e` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41438417897.
+- Fixed an application-level time-of-check/time-of-use gap: PostgreSQL asset identity/status updates and both asset link operations now acquire the asset row lock before checking status or identity. SQLite has no equivalent row locks; direct privileged SQL remains outside this application guarantee.
+- Added PostgreSQL tests for both orderings of identity change and retirement against investigation and SBOM linking; these tests require CI. Local backend 120 passed/21 PostgreSQL skipped; frontend 12 passed, build, Alembic/pip checks, npm audit passed.

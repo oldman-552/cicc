@@ -599,3 +599,64 @@ def test_postgres_direct_workspace_state_change_serializes_with_login(monkeypatc
     assert status==401
     with SessionLocal.begin() as db:db.execute(text('UPDATE workspaces SET active=true WHERE id=:id'),{'id':wid})
     with SessionLocal() as db:assert not db.scalars(select(Session).where(Session.user_id==uid)).all()
+
+
+@pytest.mark.parametrize('link_kind',['case','sbom'])
+@pytest.mark.parametrize('mutation',['metadata','retire'])
+def test_postgres_asset_link_and_mutation_serialize(monkeypatch,link_kind,mutation):
+    """A link must not race an asset identity change or retirement."""
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from backend.app.models import Asset
+    monkeypatch.setattr(main,'DEMO',True)
+    original_scoped=main.scoped
+    for first in ('mutation','link'):
+        suffix=uuid4().hex[:16];old='old-'+suffix;new='new-'+suffix
+        body={'name':'Race asset','asset_type':'application','identifier':old,'owner':'CI','scope_basis':'Disposable CI data','authorized':True}
+        with TestClient(main.app,base_url='https://testserver') as client:
+            asset=client.post('/api/assets',json=body).json();aid=asset['id']
+            if link_kind=='case':
+                case=client.post('/api/investigations',json={'title':'Race '+suffix}).json()
+                link_path=f"/api/investigations/{case['id']}/assets";link_body={'asset_id':aid}
+            else:
+                bom=client.post('/api/sboms',json={'name':'Race '+suffix,'document':{'bomFormat':'CycloneDX','components':[]}}).json()
+                link_path=f'/api/assets/{aid}/sboms';link_body={'sbom_id':bom['id'],'attested':True}
+        mutation_path=f'/api/assets/{aid}/metadata' if mutation=='metadata' else f'/api/assets/{aid}'
+        mutation_method='PUT' if mutation=='metadata' else 'PATCH'
+        mutation_body={**body,'identifier':new} if mutation=='metadata' else {'status':'retired'}
+        ready,started,release=Event(),Event(),Event()
+        hold_path,hold_method=(mutation_path,mutation_method) if first=='mutation' else (link_path,'POST')
+        other_path,other_method=(link_path,'POST') if first=='mutation' else (mutation_path,mutation_method)
+        def scoped_with_pause(db,model,id,request,lock=False):
+            if model is Asset and lock and request.url.path==other_path and request.method==other_method:started.set()
+            item=original_scoped(db,model,id,request,lock=lock)
+            if model is Asset and lock and request.url.path==hold_path and request.method==hold_method:
+                ready.set()
+                if not release.wait(10):raise RuntimeError('test timeout')
+            return item
+        monkeypatch.setattr(main,'scoped',scoped_with_pause)
+        def run_link():
+            with TestClient(main.app,base_url='https://testserver') as client:return client.post(link_path,json=link_body)
+        def run_mutation():
+            with TestClient(main.app,base_url='https://testserver') as client:return client.request(mutation_method,mutation_path,json=mutation_body)
+        first_fn,second_fn=(run_mutation,run_link) if first=='mutation' else (run_link,run_mutation)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            a=pool.submit(first_fn)
+            try:
+                assert ready.wait(10)
+                b=pool.submit(second_fn);assert started.wait(10)
+            finally:release.set()
+            one=a.result(timeout=15);two=b.result(timeout=15)
+        mut_result,link_result=(one,two) if first=='mutation' else (two,one)
+        if first=='mutation':
+            assert mut_result.status_code==200
+            assert link_result.status_code==(201 if mutation=='metadata' else 409)
+            if mutation=='metadata' and link_kind=='case':assert link_result.json()['snapshot']['identifier']==new
+        else:
+            assert link_result.status_code==201
+            assert mut_result.status_code==(409 if mutation=='metadata' else 200)
+        with TestClient(main.app,base_url='https://testserver') as client:
+            current=client.get(f'/api/assets/{aid}').json()
+        assert current['identifier']==(new if first=='mutation' and mutation=='metadata' else old)
+        assert current['status']==('retired' if mutation=='retire' else 'active')
+        monkeypatch.setattr(main,'scoped',original_scoped)
