@@ -179,7 +179,10 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440996613",
       "result": "26 PostgreSQL tests passed, new test failed due to missing import; fixed and verified in subsequent CI"
     },
-    "postgres_recovery_rehearsal": "pending CI",
+    "postgres_recovery_rehearsal": {
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41441681870",
+      "result": "failed due to overlong synthetic workspace slug; fixed, rerun pending"
+    },
     "postgres_recovery_initial": {
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41441609545",
       "result": "workflow rejected before job creation; service context moved to step level, fix awaiting CI"

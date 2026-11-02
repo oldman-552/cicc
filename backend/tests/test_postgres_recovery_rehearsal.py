@@ -32,7 +32,7 @@ def test_synthetic_postgres_dump_restore_revokes_sessions():
     assert url.database=='cicc_test' and url.username=='cicc_test'
     suffix=uuid4().hex;target='cicc_restore_'+suffix;username='rehearsal'+suffix[:16]
     with SessionLocal.begin() as db:
-        workspace=create_workspace(db,'rehearsal-'+suffix,'Synthetic recovery rehearsal')
+        workspace=create_workspace(db,'rehearsal-'+suffix[:24],'Synthetic recovery rehearsal')
         user=accounts.configure_account(db,username,'synthetic-password-123456','admin',workspace.id)
         token,_=security.create_session(db,user.id);db.flush()
     # This produces the archive from the disposable service, not a supplied file.

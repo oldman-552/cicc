@@ -165,3 +165,5 @@
 - Local backend 129 passed/28 PostgreSQL skipped; Alembic and pip checks passed. First PostgreSQL execution is pending CI. This is not a production recovery tool, secure backup, key custody, freshness proof or security-state reconciliation; never use with real data.
 
 - Initial rehearsal run https://github.com/oldman-552/cicc/actions/runs/41441609545 failed before job creation due to using the service `job` context in job-level environment. Moved the container ID expression to step-level environment, where the context is supported; CI verification still pending.
+
+- Run https://github.com/oldman-552/cicc/actions/runs/41441681870 reached the PostgreSQL rehearsal but failed because the synthetic workspace slug exceeded the 40-character limit; 27 other PostgreSQL tests passed. Shortened the slug and will re-run CI.
