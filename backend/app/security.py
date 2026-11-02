@@ -1,7 +1,7 @@
 """Development identity primitives; not a substitute for enterprise SSO/MFA."""
 import hashlib, hmac, re, secrets
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import select, delete, exists, or_
+from sqlalchemy import select, delete, exists, or_, text
 from .models import User, UserMfa, Session, Workspace
 
 VALID_ROLES=('admin','analyst','viewer')
@@ -27,6 +27,21 @@ def check_password(password: str, encoded: str) -> bool:
         if len(salt_b)!=16 or len(value_b)!=32: return False
         return hmac.compare_digest(hashlib.scrypt(password.encode(),salt=salt_b,n=16384,r=8,p=1,dklen=32),value_b)
     except (ValueError,TypeError,UnicodeError): return False
+
+
+def lock_login_limits(db,account_hash,client_hash):
+    """Serialize throttle checks until the login transaction commits/rolls back.
+
+    PostgreSQL locks are shared by workers connected to the same database.
+    SQLite uses a coarse write lock; this is development-only and can return busy.
+    """
+    dialect=db.get_bind().dialect.name
+    if dialect=='postgresql':
+        keys=sorted({int.from_bytes(hashlib.sha256((prefix+value).encode('ascii')).digest()[:8],'big',signed=True) for prefix,value in (('account:',account_hash),('client:',client_hash))})
+        for key in keys:db.execute(text('SELECT pg_advisory_xact_lock(CAST(:key AS bigint))'),{'key':key})
+    elif dialect=='sqlite':
+        db.execute(text('BEGIN IMMEDIATE'))
+    else:raise ValueError('Unsupported database for login throttling')
 
 def upsert_user(db, username: str, password: str, role: str, workspace_id: int=1):
     username=username_normalize(username)

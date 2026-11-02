@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate expanded cross-workspace write-denial API checks in disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor CI for expanded cross-workspace API tests; fix failures, then continue tenant isolation and PostgreSQL recovery.",
+  "active_task": "Validate concurrent login throttle serialization on disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor CI for concurrent account/client login throttling tests, repair failures, then continue tenant isolation and PostgreSQL recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -31,8 +31,8 @@
     "SQLite-tested database-issued source attempt ordering, independent of application clocks"
   ],
   "last_local_tests": {
-    "backend_passed": 127,
-    "backend_skipped_postgresql": 26,
+    "backend_passed": 129,
+    "backend_skipped_postgresql": 27,
     "frontend_simulated_dom_passed": 13,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -46,7 +46,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Expanded cross-workspace API checks require PostgreSQL CI; SQLite concurrency and distributed scheduling remain uncertified"
+    "Concurrent login throttle serialization requires PostgreSQL CI; shared database, updated workers, synchronized clocks and trusted proxy config required; not comprehensive abuse protection"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -163,6 +163,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41439978311",
       "result": "passed backend, frontend and disposable PostgreSQL including clock regression"
     },
-    "expanded_scope_api": "pending CI"
+    "expanded_scope_api": {
+      "commit": "8892bfb9c6c1b37aa5c58248ddef020ab79fe6d4",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41440199035",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "login_throttle_concurrency": "pending CI"
   }
 }

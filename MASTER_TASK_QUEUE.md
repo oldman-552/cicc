@@ -4,8 +4,8 @@ This is a prioritized working queue, not evidence that the complete RCTFC v4.1 s
 
 ## Active
 
-1. Validate expanded cross-workspace write-denial API checks on disposable PostgreSQL CI; repair failures.
-2. Extend identity security with phishing-resistant authenticators, production key management, verified recovery and distributed throttling; local TOTP and its optional deployment-wide policy are not enterprise MFA.
+1. Validate serialized concurrent login throttling on disposable PostgreSQL CI; repair failures.
+2. Extend identity security with phishing-resistant authenticators, production key management, verified recovery and robust distributed/edge throttling; local TOTP and its optional deployment-wide policy are not enterprise MFA.
 3. Continue adversarial workspace/concurrency testing, including workspace lifecycle; direct database state edits remain unaudited and privileged actors can bypass safeguards; selected direct-SQL guards passed SQLite and disposable PostgreSQL CI, but production isolation and RLS remain absent.
 
 ## Pending — ordered by dependency, not approval gates

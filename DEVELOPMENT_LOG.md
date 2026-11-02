@@ -145,3 +145,9 @@
 
 - Database-issued source sequence commit `4d3878c` passed backend, frontend and disposable PostgreSQL CI, including clock regression: https://github.com/oldman-552/cicc/actions/runs/41439978311. Displayed timestamps remain clock-dependent.
 - Expanded cross-workspace denial checks to asset metadata and SBOM associations and investigation evidence, technique, note and asset links. SQLite API checks passed; PostgreSQL variants await CI. No RLS or comprehensive isolation claim.
+
+### Concurrent login throttling
+
+- Expanded cross-workspace denial tests in commit `8892bfb` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41440199035. These do not establish production isolation.
+- Login throttle checks now acquire ordered PostgreSQL transaction advisory locks by account/client before querying or verifying passwords, serializing concurrent requests across updated workers sharing one database; SQLite uses a coarse write lock and returns 503 if acquisition fails. Time windows use application clocks; observed IP depends on trusted proxy setup. Mixed versions, independent databases, lockout abuse, resource exhaustion and SQLite contention remain limitations. This is not edge DDoS protection.
+- SQLite concurrent tests passed (10 requests on one account, 31 from one client), including fail-closed lock error. PostgreSQL concurrent validation is pending CI. Local backend 129 passed/27 PostgreSQL skipped; frontend 13 passed, build, Alembic/pip checks and npm audit passed.

@@ -32,4 +32,6 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Source publication serializes through a source record and rejects attempts superseded by a later completed attempt; fetches can overlap and database-issued sequences determine ordering, independent of application clocks. PostgreSQL sequence tests passed in disposable CI; displayed timestamps still rely on clocks.
 
-- Cross-workspace endpoint tests include unauthorized writes to selected asset and investigation child operations; expanded PostgreSQL validation is pending.
+- Cross-workspace endpoint tests include unauthorized writes to selected asset and investigation child operations; expanded PostgreSQL validation passed in disposable CI.
+
+- Login throttling uses ordered transaction advisory locks on PostgreSQL or a coarse SQLite write lock. Shared database and updated workers are required; application clocks and trusted proxy configuration still matter. PostgreSQL concurrency verification is pending.

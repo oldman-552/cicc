@@ -755,3 +755,31 @@ def test_postgres_source_sequence_survives_application_clock_regression(monkeypa
     with SessionLocal() as db:
         assert db.get(Advisory,old) is None and db.get(Advisory,new) is not None
         source=db.get(Source,'github');assert source.attempt_sequence==source.completed_sequence
+
+
+def test_postgres_concurrent_login_limits_shared_across_requests(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+    from sqlalchemy import func,select
+    from backend.app.db import SessionLocal
+    from backend.app.models import LoginAttempt
+    monkeypatch.setattr(main,'DEMO',False)
+    monkeypatch.setattr(security,'check_password',lambda *_:False)
+    suffix=uuid4().hex[:16]
+    def run(n,username,host):
+        barrier=Barrier(n)
+        def login(i):
+            barrier.wait(timeout=15)
+            with TestClient(main.app,base_url='https://testserver',client=(host(i),50000)) as client:
+                return client.post('/api/auth/login',json={'username':username(i),'password':'wrong'}).status_code
+        with ThreadPoolExecutor(max_workers=n) as pool:return list(pool.map(login,range(n)))
+    account='parallel-'+suffix
+    statuses=run(10,lambda _:account,lambda i:f'198.51.100.{i+1}-{suffix}')
+    assert statuses.count(401)==5 and statuses.count(429)==5
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.account_hash==security.digest(account)))==5
+    client='203.0.113.123-'+suffix
+    statuses=run(31,lambda i:f'unknown-{i}-{suffix}',lambda _:client)
+    assert statuses.count(401)==30 and statuses.count(429)==1
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.client_hash==security.digest(client)))==30

@@ -185,7 +185,11 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     if DEMO: raise HTTPException(400,'Login unavailable in demo mode')
     try: username=security.username_normalize(body.username)
     except ValueError: username=''
-    timestamp=utcnow(); account=security.digest(username); client=security.digest(request.client.host if request.client else 'unknown')
+    account=security.digest(username); client=security.digest(request.client.host if request.client else 'unknown')
+    try:security.lock_login_limits(db,account,client)
+    except (SQLAlchemyError,ValueError) as exc:
+        db.rollback();raise HTTPException(503,'Authentication temporarily unavailable') from exc
+    timestamp=utcnow()
     failures=db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.account_hash==account,LoginAttempt.success.is_(False),LoginAttempt.created_at>timestamp-timedelta(minutes=15)))
     recent=db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.client_hash==client,LoginAttempt.created_at>timestamp-timedelta(minutes=1)))
     if failures>=5 or recent>=30: raise HTTPException(429,'Too many attempts')
