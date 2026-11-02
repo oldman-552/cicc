@@ -21,6 +21,7 @@ Users, hashed sessions, login attempts, sources, advisories, KEV entries, invest
 
 FastAPI exposes interactive documentation at `/docs` and `/openapi.json`.
 
+- `/api/health`, `/api/ready`: liveness and limited identity/database readiness; not deployment security certification.
 - `/api/auth/session`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/sessions/revoke-others`: local session management; users may revoke their own other sessions with CSRF protection.
 - `/api/sources`, `/api/sources/{github|cisa|mitre|attack|epss}/refresh`: manual collection, health and freshness.
 - `/api/advisories`, `/api/kev`, `/api/cves`: paginated cached search, source labels and CVE-level KEV correlation. Advisories may include limited cached EPSS model estimates; the FIRST adapter is mocked-only, not live-verified. CVE Program collection is limited to at most 10 CVEs referenced by cached GitHub advisories per refresh.

@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate self-service session revocation on disposable PostgreSQL CI.",
-  "next_exact_action": "Inspect GitHub Actions for the session-management commit and fix any failure; then extend phishing-resistant identity, secure key lifecycle and workspace concurrency testing.",
+  "active_task": "Validate limited readiness endpoint in disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor GitHub Actions for the readiness commit and fix failures; then continue secure key lifecycle, phishing-resistant identity and workspace concurrency testing.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -16,10 +16,11 @@
     "Trusted-local account disable and session revocation with mutable CLI audit",
     "Optional local TOTP with encrypted seeds, replay rejection, trusted CLI enrollment/recovery, and translated login",
     "Optional deployment-wide TOTP enforcement and session MFA assurance (local tests passed)",
-    "Authenticated user self-service revocation of other sessions and localized TOTP status"
+    "Authenticated user self-service revocation of other sessions and localized TOTP status",
+    "Limited database, identity schema and MFA key readiness probe"
   ],
   "last_local_tests": {
-    "backend_passed": 75,
+    "backend_passed": 78,
     "backend_skipped_postgresql": 7,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
@@ -32,7 +33,7 @@
     "No live FIRST EPSS access due to outbound host policy",
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
-    "No local Docker or PostgreSQL; session-management revision requires CI validation"
+    "No local Docker or PostgreSQL; readiness revision requires CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -59,6 +60,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41433244922",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "session_management": "pending CI"
+    "session_management": {
+      "commit": "a681b206027f99c2882bdecbbd2d3e7574822b58",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41433664301",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "readiness": "pending CI"
   }
 }

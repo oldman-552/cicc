@@ -18,6 +18,7 @@ def test_postgres_transactional_asset_and_sbom_flow(monkeypatch):
     monkeypatch.setattr(main,'DEMO',True)
     unique=uuid4().hex
     with TestClient(main.app,base_url='https://testserver') as client:
+        assert client.get('/api/ready').json()=={'status':'ready'}
         asset=client.post('/api/assets',json={'name':'CI '+unique,'asset_type':'application','identifier':unique+'.example.test','owner':'CI','scope_basis':'Disposable CI data only','authorized':True})
         assert asset.status_code==201
         sbom=client.post('/api/sboms',json={'name':'CI '+unique,'document':{'bomFormat':'CycloneDX','components':[{'name':'synthetic','purl':'pkg:pypi/synthetic@1.0'}]}})

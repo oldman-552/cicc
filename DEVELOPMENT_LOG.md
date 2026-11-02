@@ -36,3 +36,9 @@
 - TOTP enforcement commit `adfcae2` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41433244922.
 - Added a CSRF-protected self-service action to revoke an account’s other sessions, including viewer accounts, without affecting the current session or other accounts. The authenticated status page shows TOTP enrollment and deployment policy; it does not claim production security. Demo mode has no session management. In-flight requests may still complete.
 - Local results: 75 backend passed, 7 PostgreSQL-only tests skipped; 12 frontend tests passed; build, Alembic check, pip check and npm audit passed. PostgreSQL session-revocation validation is defined for the next CI run.
+
+### Development readiness probe
+
+- Session-management commit `a681b20` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41433664301.
+- Added public liveness-independent `/api/ready` with database/limited identity-schema checks and, when relevant, validation of the MFA key against one enrolled seed. Failures return only a generic 503. The proposed Compose health check now uses it; Docker remains untested. This probe is not comprehensive migration, security or deployment readiness certification.
+- Local results: 78 backend passed, 7 PostgreSQL-only skipped; frontend tests/build, schema check, pip check and npm audit remain passed. A PostgreSQL readiness check is included in the next CI run.

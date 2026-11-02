@@ -7,7 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, StrictBool
 from sqlalchemy import select, delete, func, or_
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session as DbSession
 from .db import SessionLocal, get_db
 from .models import Workspace, User, UserMfa, Session, LoginAttempt, Source, Advisory, KevEntry, Investigation, Evidence, Note, Audit, Sbom, SbomComponent, SbomCandidate, MitreCve, EpssScore, Asset, InvestigationAsset, AssetSbom, AttackTechnique, InvestigationTechnique, InvestigationEvent, utcnow
@@ -88,7 +88,7 @@ def advisory_dict(a, kev=None, catalog=None, epss=None):
 @app.middleware('http')
 async def access_control(request:Request,call_next):
     path=request.url.path
-    if path.startswith('/api/') and path not in ('/api/health','/api/auth/session','/api/auth/login'):
+    if path.startswith('/api/') and path not in ('/api/health','/api/ready','/api/auth/session','/api/auth/login'):
         if DEMO: request.state.actor='demo'; request.state.role='admin'; request.state.workspace_id=1
         else:
             with SessionLocal() as db: row=security.get_session(db,request.cookies.get('cicc_session',''),require_mfa=REQUIRE_MFA)
@@ -140,6 +140,20 @@ class NoteBody(BaseModel):
 
 @app.get('/api/health')
 def health(): return {'status':'ok','mode':'demo' if DEMO else 'authentication-required','production_ready':False}
+
+@app.get('/api/ready')
+def ready():
+    # Database connectivity and a minimal identity-schema check, not full readiness certification.
+    try:
+        with SessionLocal() as db:
+            sample=db.execute(select(UserMfa.user_id,UserMfa.encrypted_secret).limit(1)).first()
+            db.execute(select(Session.mfa_verified).limit(1)).first()
+            if not DEMO and (REQUIRE_MFA or sample):
+                mfa.key_from_env()
+                if sample:mfa.decrypt_secret(sample.user_id,sample.encrypted_secret)
+    except (SQLAlchemyError,mfa.MfaUnavailable):
+        return JSONResponse({'status':'not_ready'},status_code=503)
+    return {'status':'ready'}
 
 @app.get('/api/auth/session')
 def current_session(request:Request):
