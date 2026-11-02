@@ -81,3 +81,9 @@
 - Implemented the saved checkpoint: disposable PostgreSQL race tests cover insert-versus-delete of either asset or SBOM. Pending CI because PostgreSQL is unavailable locally.
 - Added migration `a63c9f170b42` and ORM guards preventing parent reassignment for six workspace-derived child tables. Preflight refuses orphaned rows and downgrade refuses removal while those tables have records; existing ownership provenance cannot be reconstructed. Applied migration to the development SQLite database.
 - Synthetic SQLite tests cover direct SQL, no-op changes, rollback/downgrade refusal, migration preflight and ORM guard. Local backend 92 passed/14 PostgreSQL skipped; 12 frontend tests, build, Alembic and pip checks, npm audit passed. Three.js chunk warning remains. This is not production isolation.
+
+### Development SQLite restore-to-new
+
+- Child-parent guard and asset–SBOM race commit `9a2c12d` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41436533643. These controls are not RLS.
+- Added staged SQLite restore to a new file. It checks recorded migration head and database integrity, removes every saved session transactionally, writes a mutable unscoped recovery audit entry and publishes by non-overwriting hard link. It requires explicit acknowledgment that passwords, MFA and audit history may be stale. No encryption, backup authentication, production recovery or PostgreSQL recovery is claimed.
+- Synthetic tests cover all-workspace revocation, unchanged source, schema mismatch, existing target, failed sanitization and CLI acknowledgment. Local result 95 backend passed, 14 PostgreSQL skipped; 12 frontend passed, build, schema check, pip check and npm audit passed. CI pending.

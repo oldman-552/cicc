@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate child parent guard migration and asset–SBOM concurrency in disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor GitHub Actions for child parent guard and asset–SBOM race tests; repair any failure, then continue tenant isolation and recovery.",
+  "active_task": "Validate development SQLite restore-to-new session invalidation in CI.",
+  "next_exact_action": "Monitor CI for development SQLite restore commit, repair failures, then continue production tenant isolation and authenticated encrypted backup design.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -20,10 +20,11 @@
     "Limited database, identity schema and MFA key readiness probe",
     "Offline global TOTP key rotation with transactional rollback and session revocation",
     "Development SQLite copy/verify-to-new CLI with restore limitations and synthetic tests",
-    "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering"
+    "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering",
+    "Development SQLite restore-to-new with saved session invalidation and explicit stale-security warning"
   ],
   "last_local_tests": {
-    "backend_passed": 92,
+    "backend_passed": 95,
     "backend_skipped_postgresql": 14,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
@@ -38,7 +39,7 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
-    "Child parent guard and asset–SBOM race tests require disposable PostgreSQL CI validation"
+    "SQLite restore revision needs CI validation; backups remain unauthenticated and unencrypted, PostgreSQL production recovery absent"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -100,6 +101,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435722572",
       "result": "passed backend, frontend and disposable PostgreSQL scoped-link race test"
     },
-    "child_parent_guards_and_sbom_races": "pending CI"
+    "child_parent_guards_and_sbom_races": {
+      "commit": "9a2c12d8c2fce7e5648d4c23904a5af1ee973ac7",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41436533643",
+      "result": "passed backend, frontend and disposable PostgreSQL guard and race tests"
+    },
+    "sqlite_restore": "pending CI"
   }
 }

@@ -14,4 +14,6 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 
 - Trusted workspace disable/enable revokes workspace sessions transactionally. PostgreSQL login and account configuration acquire a workspace row lock first; this serializes workspace logins and is not load-tested. SQLite has no equivalent row locks, and direct SQL state edits bypass this workflow.
 
-- Selected investigation/SBOM child parent references have ORM checks and migration-installed immutability triggers. This cannot prevent delete/reinsert or prove prior ownership; PostgreSQL verification is pending CI.
+- Selected investigation/SBOM child parent references have ORM checks and migration-installed immutability triggers. This cannot prevent delete/reinsert or prove prior ownership; PostgreSQL direct-SQL verification passed on a disposable CI database.
+
+- The development SQLite restore-to-new operation stages the copy, checks its recorded revision and invalidates saved sessions before atomic publication; it does not authenticate backups, reconcile stale credentials or provide production recovery.
