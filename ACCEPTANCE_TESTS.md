@@ -31,4 +31,4 @@ Expanded unauthorized cross-workspace asset metadata, SBOM association, and inve
 
 Concurrent login throttle checks passed SQLite tests, including 10 simultaneous attempts for one account and 31 for one client; PostgreSQL equivalent passed: https://github.com/oldman-552/cicc/actions/runs/41441134477. This does not establish comprehensive denial-of-service protection.
 
-A CI-only synthetic PostgreSQL dump/restore rehearsal, including session invalidation, awaits its first disposable PostgreSQL execution; local environment skipped it. It is not a production DR exercise.
+A CI-only synthetic PostgreSQL dump/restore rehearsal, including session invalidation, passed disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41441849186; local environment skipped it. It is not a production DR exercise.

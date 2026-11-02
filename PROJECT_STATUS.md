@@ -53,4 +53,4 @@ The preview disables authentication and must not contain sensitive data. No enfo
 
 - Login throttling serializes concurrent checks in SQLite tests; Selected PostgreSQL advisory-lock concurrency checks passed ([run 41441134477](https://github.com/oldman-552/cicc/actions/runs/41441134477)). The mechanism is not comprehensive abuse protection.
 
-- A synthetic disposable PostgreSQL dump/restore rehearsal is implemented in CI tests; it has not yet run in CI and is not a production restore tool.
+- A synthetic disposable PostgreSQL dump/restore rehearsal is implemented in CI tests; it passed disposable CI ([run 41441849186](https://github.com/oldman-552/cicc/actions/runs/41441849186)) and is not a production restore tool.

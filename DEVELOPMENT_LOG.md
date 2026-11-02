@@ -167,3 +167,5 @@
 - Initial rehearsal run https://github.com/oldman-552/cicc/actions/runs/41441609545 failed before job creation due to using the service `job` context in job-level environment. Moved the container ID expression to step-level environment, where the context is supported; CI verification still pending.
 
 - Run https://github.com/oldman-552/cicc/actions/runs/41441681870 reached the PostgreSQL rehearsal but failed because the synthetic workspace slug exceeded the 40-character limit; 27 other PostgreSQL tests passed. Shortened the slug and will re-run CI.
+
+- Fixed slug commit `ef783e1` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41441849186, including synthetic dump/restore and session deletion. This is not a production DR procedure; the activity check is non-atomic and stale security state remains unhandled. Next: exercise truncated/invalid synthetic dump failure, cleanup, and source preservation in disposable CI.

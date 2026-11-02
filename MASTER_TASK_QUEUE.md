@@ -4,7 +4,7 @@ This is a prioritized working queue, not evidence that the complete RCTFC v4.1 s
 
 ## Active
 
-1. Run the CI-only synthetic PostgreSQL dump/restore rehearsal with session invalidation; diagnose failures and rerun. The target is newly created, not caller-selected; the activity precheck is not atomic and does not guarantee isolation.
+1. Add disposable PostgreSQL CI failure-injection tests for truncated/invalid dump restore, target cleanup and preservation of the source; no external archive or production database use.
 2. Extend identity security with phishing-resistant authenticators, production key management, verified recovery and robust distributed/edge throttling; local TOTP and its optional deployment-wide policy are not enterprise MFA.
 3. Continue adversarial workspace/concurrency testing, including workspace lifecycle; direct database state edits remain unaudited and privileged actors can bypass safeguards; selected direct-SQL guards passed SQLite and disposable PostgreSQL CI, but production isolation and RLS remain absent.
 
