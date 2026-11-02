@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate SQLite copy and restore-to-new tests in CI.",
-  "next_exact_action": "Monitor GitHub Actions for the SQLite copy commit and fix any failure; then advance phishing-resistant identity, PostgreSQL recovery design and workspace concurrency testing.",
+  "active_task": "Validate PostgreSQL login/account-disable serialization test in CI.",
+  "next_exact_action": "Monitor GitHub Actions for the login/disable concurrency test; fix failures and design an audited concurrency-safe workspace deactivation flow that permanently revokes sessions.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -23,7 +23,7 @@
   ],
   "last_local_tests": {
     "backend_passed": 87,
-    "backend_skipped_postgresql": 8,
+    "backend_skipped_postgresql": 9,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -35,7 +35,8 @@
     "No live FIRST EPSS access due to outbound host policy",
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
-    "No local Docker or PostgreSQL; SQLite copy revision requires CI validation"
+    "No local Docker or PostgreSQL; login/disable race test requires CI validation",
+    "Direct workspace deactivation blocks rather than permanently revokes sessions; reactivation may revive unexpired sessions"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -77,6 +78,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41434379208",
       "result": "passed backend, frontend and disposable PostgreSQL rotation test"
     },
-    "sqlite_copy": "pending CI"
+    "sqlite_copy": {
+      "commit": "dea68c28722b82a82fb03d990e8fbd2fa4309b9f",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41434800817",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "login_disable_concurrency": "pending CI"
   }
 }

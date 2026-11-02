@@ -54,3 +54,9 @@
 - Offline MFA key rotation commit `14a904f` passed GitHub Actions backend, frontend and disposable PostgreSQL, including the rotation test: https://github.com/oldman-552/cicc/actions/runs/41434379208.
 - Added a trusted-local SQLite copy-to-new/verify CLI with exclusive creation, owner-only permissions, integrity checking and cleanup of partial files on handled failures. Tests cover committed WAL data, no-overwrite and symlink behavior, application identity data in a restored synthetic snapshot, and session revival. It is unencrypted, not authenticating, does not include MFA keys or support PostgreSQL, and is not a production backup/recovery solution.
 - Local result: 87 backend passed, 8 PostgreSQL skipped; 12 frontend tests, build, schema check, pip check and npm audit passed. CI for the SQLite copy revision is pending.
+
+### PostgreSQL login/disable race test and workspace caveat
+
+- SQLite copy commit `dea68c2` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41434800817.
+- Added a PostgreSQL-only test exercising both login-before-disable and disable-before-login ordering; validation requires the next CI run. Corrected documentation: directly deactivating a workspace blocks sessions only while inactive and may revive them on reactivation. Migrations require stopped writers; no safe workspace lifecycle workflow is claimed.
+- Local results remain 87 backend passed, 9 PostgreSQL skipped; frontend 12 passed, build/schema/pip checks and npm audit passed previously.

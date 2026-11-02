@@ -14,3 +14,5 @@
 | Backup/DR | No implementation or drill | Design protected backups, restoration testing and measurable RPO/RTO before deployment. |
 | SBOM precision | Only a limited npm/PyPI range subset is evaluated; JSON parsing is not isolated | Candidate identity matches cannot establish vulnerability or safety; add isolated parsing and broaden ecosystem-correct range evaluation. |
 | Bundle size | Vite reports large lazy-loaded Three.js chunk (~901 kB minified) | Measure real browser performance and optimize without misrepresenting results. |
+
+- Direct workspace deactivation only blocks sessions while inactive; reactivation can revive unexpired sessions. A safe audited workspace lifecycle with concurrency controls is not yet implemented.
