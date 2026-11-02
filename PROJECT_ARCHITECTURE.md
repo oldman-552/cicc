@@ -19,3 +19,5 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 - The development SQLite restore-to-new operation stages the copy, checks its recorded revision and invalidates saved sessions before atomic publication; it does not authenticate backups, reconcile stale credentials or provide production recovery.
 
 - Experimental SQLite encrypted backups use AES-256-GCM with protected plaintext staging and external backup keys; replay, stale security state, key custody and PostgreSQL recovery remain unresolved. No independent cryptographic review.
+
+- Login and session validation fail closed on unknown role values; supported CLI account updates revoke sessions, while direct database edits bypass that workflow.

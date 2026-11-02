@@ -73,3 +73,21 @@ def test_workspace_cli_audits_creation_after_commit(env,monkeypatch,capsys):
         workspace=db.scalar(select(Workspace).where(Workspace.slug=='research'))
         audit=db.scalar(select(Audit).where(Audit.action=='workspace.created'))
         assert audit.workspace_id==workspace.id and audit.actor=='local-cli' and audit.detail=='research'
+
+
+@pytest.mark.parametrize('unknown_role',['unexpected','','ADMIN','admin '])
+def test_invalid_database_role_fails_closed_for_login_and_existing_session(env,monkeypatch,unknown_role):
+    from sqlalchemy import update
+    from backend.app.models import User
+    client,factory=env;monkeypatch.setattr(main,'DEMO',False)
+    password='synthetic-password-123456'
+    with factory.begin() as db:accounts.configure_account(db,'badrole',password,'viewer',1)
+    assert client.post('/api/auth/login',json={'username':'badrole','password':password}).status_code==200
+    with factory.begin() as db:db.execute(update(User).where(User.username=='badrole').values(role=unknown_role))
+    assert client.get('/api/auth/session').status_code==401
+    assert client.get('/api/investigations').status_code==401
+    assert client.post('/api/investigations',json={'title':'Forbidden'},headers={'X-CSRF-Token':client.cookies.get('cicc_csrf')}).status_code==401
+    assert client.post('/api/auth/login',json={'username':'badrole','password':password}).status_code==401
+    # Trusted account administration repairs the role and revokes prior sessions.
+    with factory.begin() as db:accounts.configure_account(db,'badrole',password,'viewer',1)
+    assert client.get('/api/auth/session').status_code==401

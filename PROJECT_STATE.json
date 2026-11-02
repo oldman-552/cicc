@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate experimental authenticated SQLite backup in CI.",
-  "next_exact_action": "Monitor CI for experimental encrypted SQLite backup, repair failures; then pursue tenant isolation and PostgreSQL recovery without claiming production readiness.",
+  "active_task": "Validate fail-closed unknown-role handling on disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor CI for the unknown-role fail-closed revision and repair failures; then continue database authorization and PostgreSQL disaster recovery.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -22,11 +22,12 @@
     "Development SQLite copy/verify-to-new CLI with restore limitations and synthetic tests",
     "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering",
     "Development SQLite restore-to-new with saved session invalidation and explicit stale-security warning",
-    "Experimental authenticated encrypted SQLite backups with external key, protected plaintext staging and session-invalidating restore"
+    "Experimental authenticated encrypted SQLite backups with external key, protected plaintext staging and session-invalidating restore",
+    "Fail-closed login and session authorization for unexpected database roles"
   ],
   "last_local_tests": {
-    "backend_passed": 105,
-    "backend_skipped_postgresql": 14,
+    "backend_passed": 109,
+    "backend_skipped_postgresql": 15,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -40,7 +41,8 @@
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
     "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
-    "Experimental encrypted SQLite backups need CI validation and independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved"
+    "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
+    "Unknown-role PostgreSQL test requires CI validation"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -112,6 +114,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41436843876",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "encrypted_sqlite_backup": "pending CI"
+    "encrypted_sqlite_backup": {
+      "commit": "c655546b706f92c09cac879382d6897a4ad6d4af",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41437204707",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "unknown_role_fail_closed": "pending CI"
   }
 }

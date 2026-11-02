@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, delete, exists, or_
 from .models import User, UserMfa, Session, Workspace
 
+VALID_ROLES=('admin','analyst','viewer')
+
 def digest(value: str) -> str: return hashlib.sha256(value.encode()).hexdigest()
 def username_normalize(value: str) -> str:
     value=value.strip().lower()
@@ -28,7 +30,7 @@ def check_password(password: str, encoded: str) -> bool:
 
 def upsert_user(db, username: str, password: str, role: str, workspace_id: int=1):
     username=username_normalize(username)
-    if role not in ('admin','analyst','viewer'): raise ValueError('Invalid role')
+    if role not in VALID_ROLES: raise ValueError('Invalid role')
     password_hash=hash_password(password)
     # Lock order is workspace, then user: lifecycle operations use the same order.
     workspace=db.scalar(select(Workspace).where(Workspace.id==workspace_id).with_for_update(key_share=True))
@@ -49,7 +51,7 @@ def create_session(db, user_id, mfa_verified=False):
 
 def get_session(db,token,require_mfa=False):
     if not token or len(token)>256: return None
-    query=select(Session,User).join(User,Session.user_id==User.id).join(Workspace,Workspace.id==User.workspace_id).where(Session.token_hash==digest(token),Session.expires_at>datetime.now(timezone.utc),User.active.is_(True),Workspace.active.is_(True))
+    query=select(Session,User).join(User,Session.user_id==User.id).join(Workspace,Workspace.id==User.workspace_id).where(Session.token_hash==digest(token),Session.expires_at>datetime.now(timezone.utc),User.active.is_(True),Workspace.active.is_(True),User.role.in_(VALID_ROLES))
     enrollment=exists(select(UserMfa.user_id).where(UserMfa.user_id==User.id))
     query=query.where(or_(Session.mfa_verified.is_(True),~enrollment))
     if require_mfa:query=query.where(enrollment,Session.mfa_verified.is_(True))

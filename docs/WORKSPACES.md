@@ -30,3 +30,6 @@ SQLite DDL can be non-transactional: a failure or interruption during schema cha
 
 
 Migration `a63c9f170b42` adds parent-reference immutability for evidence, notes, investigation events/technique references, SBOM components and candidates. A preflight rejects existing orphaned rows without changing them; it cannot detect historical reassignment or establish original ownership. Downgrade refuses while any of those child records exist, because removing these guards weakens protection. Stop writers before migrating and take a separately verified backup. SQLite migration and direct-SQL tests passed locally; PostgreSQL guard and link/delete race tests passed in disposable GitHub CI for commit 9a2c12d. These triggers do not provide RLS, stop delete/re-insert, prevent privileged schema changes or protect record contents from modification.
+
+
+Only `admin`, `analyst`, and `viewer` are accepted by login and session validation; an unexpected database role fails closed. Repair roles through the trusted account CLI, which revokes sessions. Direct SQL changes to a valid role bypass this revocation workflow, and sessions blocked only by an invalid role can become usable again if changed back outside the CLI. This is not per-object authorization or a substitute for database isolation. PostgreSQL verification of this role check is pending CI.

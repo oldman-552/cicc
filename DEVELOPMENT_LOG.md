@@ -93,3 +93,9 @@
 - SQLite restore commit `057aca5` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41436843876.
 - Added a trusted-local AES-256-GCM encrypted SQLite backup format with an external 32-byte key, authenticated header and non-overwriting publication. Restore authenticates before publishing and then invalidates saved sessions. Protected plaintext staging, separate MFA/backup keys, stale security state and replay risk are explicitly documented; this is neither a production backup service nor a PostgreSQL solution.
 - Synthetic tests cover round-trip, session revocation, wrong key, modified header/nonce/ciphertext/tag, truncation, size limit, collisions, key lengths and acknowledgments. Local backend 105 passed/14 PostgreSQL skipped; CI pending. No independent cryptographic review or production recovery drill.
+
+### Unknown role fail-closed
+
+- Experimental encrypted SQLite backup commit `c655546` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41437204707. No cryptographic or production recovery certification.
+- Fixed a privilege failure: previously an unexpected database role was treated as non-viewer for some writes. Login and session validation now reject all roles except admin, analyst and viewer. Trusted CLI repair revokes old sessions; direct SQL changes bypass account lifecycle.
+- SQLite tests exercise unexpected, empty and malformed roles for both existing sessions and login; PostgreSQL equivalent is pending CI. Local backend 109 passed/15 PostgreSQL skipped; Alembic and pip checks passed. Frontend 12 tests, build and npm audit passed on the previous revision.

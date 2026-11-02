@@ -482,3 +482,24 @@ def test_postgres_child_parent_guards_prevent_reassignment():
     with engine.begin() as db:
         note_id=next(id for table,_,_,id in targets if table=='notes')
         db.execute(text("UPDATE notes SET content='edited' WHERE id=:id"),{'id':note_id})
+
+
+def test_postgres_invalid_role_cannot_login_or_use_existing_session(monkeypatch):
+    from sqlalchemy import update
+    from backend.app import accounts
+    from backend.app.db import SessionLocal
+    from backend.app.models import User
+    from backend.app.workspaces import create_workspace
+    monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
+    suffix=uuid4().hex[:16];username='badrole'+suffix;password='synthetic-password-123456'
+    with SessionLocal.begin() as db:
+        workspace=create_workspace(db,'role-'+suffix,'Role test');workspace_id=workspace.id
+        accounts.configure_account(db,username,password,'viewer',workspace_id)
+    with TestClient(main.app,base_url='https://testserver') as client:
+        assert client.post('/api/auth/login',json={'username':username,'password':password}).status_code==200
+        with SessionLocal.begin() as db:db.execute(update(User).where(User.username==username).values(role='unexpected'))
+        assert client.get('/api/auth/session').status_code==401
+        assert client.get('/api/investigations').status_code==401
+        assert client.post('/api/auth/login',json={'username':username,'password':password}).status_code==401
+        with SessionLocal.begin() as db:accounts.configure_account(db,username,password,'viewer',workspace_id)
+        assert client.get('/api/auth/session').status_code==401
