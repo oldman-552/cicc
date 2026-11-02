@@ -11,3 +11,5 @@ The authoritative detailed architecture is [docs/architecture/SYSTEM.md](docs/ar
 Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP is available), production-grade isolation/authorization, secure evidence and audit, production deployment and recovery, comprehensive source coverage, most research and AI modules. Review `BLOCKERS.md` and `IMPLEMENTATION_TRACKER.md`.
 
 - Development SQLite copy-to-new uses the SQLite backup API and integrity check; it does not encrypt, authenticate, cover PostgreSQL or invalidate restored sessions. See `docs/RECOVERY.md`.
+
+- Trusted workspace disable/enable revokes workspace sessions transactionally. PostgreSQL login and account configuration acquire a workspace row lock first; this serializes workspace logins and is not load-tested. SQLite has no equivalent row locks, and direct SQL state edits bypass this workflow.

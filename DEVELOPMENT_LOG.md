@@ -60,3 +60,9 @@
 - SQLite copy commit `dea68c2` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41434800817.
 - Added a PostgreSQL-only test exercising both login-before-disable and disable-before-login ordering; validation requires the next CI run. Corrected documentation: directly deactivating a workspace blocks sessions only while inactive and may revive them on reactivation. Migrations require stopped writers; no safe workspace lifecycle workflow is claimed.
 - Local results remain 87 backend passed, 9 PostgreSQL skipped; frontend 12 passed, build/schema/pip checks and npm audit passed previously.
+
+### Trusted workspace lifecycle
+
+- Account login/disable concurrency commit `455c8c3` passed GitHub Actions backend, frontend and disposable PostgreSQL: https://github.com/oldman-552/cicc/actions/runs/41435065254.
+- Added trusted CLI workspace disable/enable, each transactionally revoking sessions and writing mutable audit. PostgreSQL logins and account configuration take a workspace row lock before the user lock; `FOR NO KEY UPDATE` remains compatible with foreign-key key-share locks. This serializes logins within a workspace and is not load-tested. Direct database edits bypass the lifecycle; in-flight requests can finish, and SQLite concurrency remains uncertified.
+- Synthetic SQLite tests cover workspace-scoped revocation, reactivation and rollback. A PostgreSQL login/lifecycle race test is pending CI. Local backend: 89 passed, 10 PostgreSQL skipped; schema check and pip check passed; frontend remains 12 passed, build and npm audit passed previously.

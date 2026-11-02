@@ -173,7 +173,10 @@ def login(body:LoginBody,request:Request,response:Response,db:DbSession=Depends(
     failures=db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.account_hash==account,LoginAttempt.success.is_(False),LoginAttempt.created_at>timestamp-timedelta(minutes=15)))
     recent=db.scalar(select(func.count()).select_from(LoginAttempt).where(LoginAttempt.client_hash==client,LoginAttempt.created_at>timestamp-timedelta(minutes=1)))
     if failures>=5 or recent>=30: raise HTTPException(429,'Too many attempts')
-    user=db.scalar(select(User).join(Workspace,Workspace.id==User.workspace_id).where(User.username==username,User.active.is_(True),Workspace.active.is_(True)).with_for_update(of=User))
+    # PostgreSQL serializes login with supported workspace lifecycle changes. SQLite
+    # has no equivalent row locks and remains development-only.
+    workspace=db.scalar(select(Workspace).join(User,User.workspace_id==Workspace.id).where(User.username==username,User.active.is_(True),Workspace.active.is_(True)).with_for_update(of=Workspace,key_share=True))
+    user=db.scalar(select(User).where(User.username==username,User.workspace_id==workspace.id,User.active.is_(True)).with_for_update(of=User)) if workspace else None
     dummy='scrypt$16384$8$1$'+'00'*16+'$'+'00'*32
     valid=security.check_password(body.password,user.password_hash if user else dummy)
     record=db.get(UserMfa,user.id) if user and valid else None

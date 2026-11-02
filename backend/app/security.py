@@ -29,9 +29,10 @@ def check_password(password: str, encoded: str) -> bool:
 def upsert_user(db, username: str, password: str, role: str, workspace_id: int=1):
     username=username_normalize(username)
     if role not in ('admin','analyst','viewer'): raise ValueError('Invalid role')
-    workspace=db.get(Workspace,workspace_id)
-    if not workspace or not workspace.active: raise ValueError('Workspace not available')
     password_hash=hash_password(password)
+    # Lock order is workspace, then user: lifecycle operations use the same order.
+    workspace=db.scalar(select(Workspace).where(Workspace.id==workspace_id).with_for_update(key_share=True))
+    if not workspace or not workspace.active: raise ValueError('Workspace not available')
     user=db.scalar(select(User).where(User.username==username).with_for_update())
     if user:
         if user.workspace_id!=workspace_id: raise ValueError('Moving accounts between workspaces is not supported')

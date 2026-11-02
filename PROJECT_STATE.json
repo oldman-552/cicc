@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate PostgreSQL login/account-disable serialization test in CI.",
-  "next_exact_action": "Monitor GitHub Actions for the login/disable concurrency test; fix failures and design an audited concurrency-safe workspace deactivation flow that permanently revokes sessions.",
+  "active_task": "Validate workspace lifecycle and PostgreSQL login/deactivation serialization in CI.",
+  "next_exact_action": "Monitor GitHub Actions for the workspace lifecycle commit; fix any failure, then continue adversarial tenant testing, enterprise identity and recovery work.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -19,11 +19,12 @@
     "Authenticated user self-service revocation of other sessions and localized TOTP status",
     "Limited database, identity schema and MFA key readiness probe",
     "Offline global TOTP key rotation with transactional rollback and session revocation",
-    "Development SQLite copy/verify-to-new CLI with restore limitations and synthetic tests"
+    "Development SQLite copy/verify-to-new CLI with restore limitations and synthetic tests",
+    "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering"
   ],
   "last_local_tests": {
-    "backend_passed": 87,
-    "backend_skipped_postgresql": 9,
+    "backend_passed": 89,
+    "backend_skipped_postgresql": 10,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
     "alembic_check": "passed (SQLite workspace FK metadata excluded; triggers tested separately)",
@@ -35,8 +36,8 @@
     "No live FIRST EPSS access due to outbound host policy",
     "No unattended session orchestrator configured",
     "Production tenant isolation, phishing-resistant enterprise MFA, protected evidence and hardened audit missing",
-    "No local Docker or PostgreSQL; login/disable race test requires CI validation",
-    "Direct workspace deactivation blocks rather than permanently revokes sessions; reactivation may revive unexpired sessions"
+    "No local Docker or PostgreSQL; workspace lifecycle concurrency test requires CI validation",
+    "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -83,6 +84,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41434800817",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "login_disable_concurrency": "pending CI"
+    "login_disable_concurrency": {
+      "commit": "455c8c3ace776e562d679daa6e1e3df3e6dbb24c",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41435065254",
+      "result": "passed backend, frontend and disposable PostgreSQL account concurrency test"
+    },
+    "workspace_lifecycle": "pending CI"
   }
 }
