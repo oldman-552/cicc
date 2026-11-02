@@ -21,3 +21,5 @@ Critical missing dependencies: enforced enterprise MFA/SSO (optional local TOTP 
 - Experimental SQLite encrypted backups use AES-256-GCM with protected plaintext staging and external backup keys; replay, stale security state, key custody and PostgreSQL recovery remain unresolved. No independent cryptographic review.
 
 - Login and session validation fail closed on unknown role values; supported CLI account updates revoke sessions, while direct database edits bypass that workflow.
+
+- Migration c1af7842d90b restricts persisted role values via SQLite triggers / a PostgreSQL check, with preflight and guarded downgrade; PostgreSQL validation pending CI. Direct assignment of another valid role is not prevented.

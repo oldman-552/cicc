@@ -3,8 +3,8 @@
   "branch": "arena/435f9e1a-cicc",
   "status": "early_development_not_production_ready",
   "specification": "Original full RCTFC v4.1 prompt is not in this checkout; known requirements retained in queue and tracker.",
-  "active_task": "Validate fail-closed unknown-role handling on disposable PostgreSQL CI.",
-  "next_exact_action": "Monitor CI for the unknown-role fail-closed revision and repair failures; then continue database authorization and PostgreSQL disaster recovery.",
+  "active_task": "Validate account-role database guard migration on disposable PostgreSQL CI.",
+  "next_exact_action": "Monitor CI for role-guard migration, fix failures, then continue tenant isolation and PostgreSQL recovery work.",
   "completed": [
     "Development workspace app-level scope",
     "Advisory/CVE/CISA/ATT&CK sources",
@@ -23,10 +23,11 @@
     "Trusted CLI workspace disable/enable with transactional session revocation and PostgreSQL workspace lock ordering",
     "Development SQLite restore-to-new with saved session invalidation and explicit stale-security warning",
     "Experimental authenticated encrypted SQLite backups with external key, protected plaintext staging and session-invalidating restore",
-    "Fail-closed login and session authorization for unexpected database roles"
+    "Fail-closed login and session authorization for unexpected database roles",
+    "SQLite-tested database role guard with preflight and downgrade refusal"
   ],
   "last_local_tests": {
-    "backend_passed": 109,
+    "backend_passed": 111,
     "backend_skipped_postgresql": 15,
     "frontend_simulated_dom_passed": 12,
     "frontend_build": "passed with large Three.js chunk warning",
@@ -42,7 +43,7 @@
     "Direct workspace state edits bypass session revocation; SQLite workspace lifecycle concurrency is not certified",
     "No local Docker or PostgreSQL; PostgreSQL validation depends on disposable GitHub CI",
     "Experimental encrypted SQLite backups need independent cryptographic review; plaintext staging, anti-rollback and production PostgreSQL recovery remain unresolved",
-    "Unknown-role PostgreSQL test requires CI validation"
+    "Account role database guard requires PostgreSQL CI validation; direct assignment of valid roles remains outside this safeguard"
   ],
   "automation": "External authorized Arena-session orchestrator required to resume coding automatically; GitHub CI alone only runs checks.",
   "ci": {
@@ -119,6 +120,11 @@
       "run_url": "https://github.com/oldman-552/cicc/actions/runs/41437204707",
       "result": "passed backend, frontend and disposable PostgreSQL"
     },
-    "unknown_role_fail_closed": "pending CI"
+    "unknown_role_fail_closed": {
+      "commit": "cfb48c4aa494ccde505420799293f26b9a8ca110",
+      "run_url": "https://github.com/oldman-552/cicc/actions/runs/41437432959",
+      "result": "passed backend, frontend and disposable PostgreSQL"
+    },
+    "role_guard_migration": "pending CI"
   }
 }

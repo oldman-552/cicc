@@ -99,3 +99,9 @@
 - Experimental encrypted SQLite backup commit `c655546` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41437204707. No cryptographic or production recovery certification.
 - Fixed a privilege failure: previously an unexpected database role was treated as non-viewer for some writes. Login and session validation now reject all roles except admin, analyst and viewer. Trusted CLI repair revokes old sessions; direct SQL changes bypass account lifecycle.
 - SQLite tests exercise unexpected, empty and malformed roles for both existing sessions and login; PostgreSQL equivalent is pending CI. Local backend 109 passed/15 PostgreSQL skipped; Alembic and pip checks passed. Frontend 12 tests, build and npm audit passed on the previous revision.
+
+### Database account-role guard
+
+- Unknown-role fail-closed commit `cfb48c4` passed backend, frontend and disposable PostgreSQL CI: https://github.com/oldman-552/cicc/actions/runs/41437432959.
+- Added migration `c1af7842d90b`: preflight rejects unsupported persisted roles; SQLite triggers or a PostgreSQL check constrain future roles; downgrade refuses while accounts exist. This does not stop a privileged database actor from granting another valid role. Applied locally to development SQLite.
+- SQLite migration tests cover unsupported legacy roles, direct SQL insert/update, valid roles and guarded downgrade. Backend 111 passed/15 PostgreSQL skipped; 12 frontend tests, build, Alembic and pip checks and npm audit passed. PostgreSQL migration check pending CI.

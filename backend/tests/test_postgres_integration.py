@@ -73,7 +73,7 @@ def test_postgres_authenticated_workspace_scope_and_downgrade_guard(monkeypatch)
         assert b.get('/api/audit/events').status_code==200
         assert all(x['actor']!='cia'+suffix for x in b.get('/api/audit/events').json()['items'])
     result=subprocess.run([sys.executable,'-m','alembic','-c','backend/alembic.ini','downgrade','d98dbca43b80'],capture_output=True,text=True,env=os.environ.copy())
-    assert result.returncode!=0 and ('Cannot downgrade while workspace-bound child records exist' in result.stderr or 'Cannot downgrade while additional workspaces' in result.stderr)
+    assert result.returncode!=0 and ('Cannot downgrade while accounts exist' in result.stderr or 'Cannot downgrade while workspace-bound child records exist' in result.stderr or 'Cannot downgrade while additional workspaces' in result.stderr)
     with SessionLocal() as db:
         assert db.scalar(select(Workspace).where(Workspace.slug=='ci-a-'+suffix)) is not None
 
@@ -484,8 +484,9 @@ def test_postgres_child_parent_guards_prevent_reassignment():
         db.execute(text("UPDATE notes SET content='edited' WHERE id=:id"),{'id':note_id})
 
 
-def test_postgres_invalid_role_cannot_login_or_use_existing_session(monkeypatch):
+def test_postgres_invalid_role_is_rejected_by_database(monkeypatch):
     from sqlalchemy import update
+    from sqlalchemy.exc import IntegrityError
     from backend.app import accounts
     from backend.app.db import SessionLocal
     from backend.app.models import User
@@ -493,13 +494,10 @@ def test_postgres_invalid_role_cannot_login_or_use_existing_session(monkeypatch)
     monkeypatch.setattr(main,'DEMO',False);monkeypatch.setattr(main,'REQUIRE_MFA',False)
     suffix=uuid4().hex[:16];username='badrole'+suffix;password='synthetic-password-123456'
     with SessionLocal.begin() as db:
-        workspace=create_workspace(db,'role-'+suffix,'Role test');workspace_id=workspace.id
-        accounts.configure_account(db,username,password,'viewer',workspace_id)
+        workspace=create_workspace(db,'role-'+suffix,'Role test')
+        accounts.configure_account(db,username,password,'viewer',workspace.id)
     with TestClient(main.app,base_url='https://testserver') as client:
         assert client.post('/api/auth/login',json={'username':username,'password':password}).status_code==200
-        with SessionLocal.begin() as db:db.execute(update(User).where(User.username==username).values(role='unexpected'))
-        assert client.get('/api/auth/session').status_code==401
-        assert client.get('/api/investigations').status_code==401
-        assert client.post('/api/auth/login',json={'username':username,'password':password}).status_code==401
-        with SessionLocal.begin() as db:accounts.configure_account(db,username,password,'viewer',workspace_id)
-        assert client.get('/api/auth/session').status_code==401
+        with pytest.raises(IntegrityError):
+            with SessionLocal.begin() as db:db.execute(update(User).where(User.username==username).values(role='unexpected'))
+        assert client.get('/api/auth/session').json()['role']=='viewer'

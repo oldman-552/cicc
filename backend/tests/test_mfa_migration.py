@@ -7,7 +7,7 @@ import sys
 def test_mfa_migration_refuses_downgrade_until_enrollment_removed(tmp_path):
     path=tmp_path/'mfa.db';env={**os.environ,'DATABASE_URL':f'sqlite:///{path}'}
     def alembic(*args):return subprocess.run([sys.executable,'-m','alembic','-c','backend/alembic.ini',*args],env=env,capture_output=True,text=True)
-    result=alembic('upgrade','head');assert result.returncode==0,result.stderr
+    result=alembic('upgrade','23c58ba2b681');assert result.returncode==0,result.stderr
     with sqlite3.connect(path) as db:
         db.execute("INSERT INTO users (id,workspace_id,username,password_hash,role,active) VALUES (1,1,'test-user','not-a-real-hash','viewer',1)")
         db.execute("INSERT INTO user_mfa (user_id,encrypted_secret,last_counter,enabled_at) VALUES (1,x'010203',100,'2025-01-01')")
